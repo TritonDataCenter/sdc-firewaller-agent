@@ -1,0 +1,17 @@
+{
+    "fwapi": {
+        "fast": {
+            "port": 2020,
+            "retry": {
+                "maxTimeout": 6000,
+                "minTimeout": 100,
+                "retries": "Infinity"
+            }
+        }
+    },
+    "retry": {
+        "maxTimeout": 6000,
+        "minTimeout": 100,
+        "retries": "Infinity"
+    }
+}

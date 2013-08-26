@@ -1,0 +1,32 @@
+{
+    "name": "firewaller",
+    "description": "SmartDataCenter Firewalling Agent",
+    "version": "1.0.0",
+    "author": "Joyent (joyent.com)",
+    "private": true,
+    "dependencies": {
+        "assert-plus": "0.1.4",
+        "async": "0.2.9",
+        "backoff": "2.3.0",
+        "dtrace-provider": "0.2.8",
+        "fast": "0.2.8",
+        "jsprim": "0.5.0",
+        "microtime": "0.3.3",
+        "node-uuid": "1.2.0",
+        "once": "1.1.1",
+        "vasync": "1.3.3",
+        "verror": "1.3.6"
+    },
+    "platformDependencies": {
+        "bunyan": "0.21.3",
+        "sdc-clients": "git+ssh://git@git.joyent.com:node-sdc-clients.git#9d4678c"
+    },
+    "devDependencies": {
+        "nodeunit": "git://github.com/rgulewich/nodeunit.git#80a3876"
+    },
+    "scripts": {
+        "test": "./test.sh",
+        "postinstall":   "./npm/postinstall.sh",
+        "postuninstall": "./npm/postuninstall.sh"
+    }
+}
