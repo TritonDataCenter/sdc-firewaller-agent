@@ -47,8 +47,8 @@ include ./tools/mk/Makefile.smf.defs
 
 NAME		:= firewaller
 RELEASE_TARBALL := $(NAME)-$(STAMP).tgz
-TMPDIR          := /tmp/$(STAMP)
-DSTDIR          := $(TMPDIR)/$(NAME)
+RELSTAGEDIR          := /tmp/$(STAMP)
+DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 
 
 #
@@ -91,8 +91,8 @@ release: all docs $(SMF_MANIFESTS)
     $(DSTDIR)
 	# Cleanup dev / unused bits
 	rm -rf $(DSTDIR)/node_modules/nodeunit
-	(cd $(TMPDIR) && $(TAR) -zcf $(TOP)/$(RELEASE_TARBALL) *)
-	@rm -rf $(TMPDIR)
+	(cd $(RELSTAGEDIR) && $(TAR) -zcf $(TOP)/$(RELEASE_TARBALL) *)
+	@rm -rf $(RELSTAGEDIR)
 
 .PHONY: publish
 publish: release
