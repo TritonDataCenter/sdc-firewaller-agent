@@ -9,7 +9,7 @@
         "async": "0.2.9",
         "backoff": "2.3.0",
         "bunyan": "0.22.1",
-        "fast-stream": "git+ssh://git@git.joyent.com:fast-stream.git#9d4678c",
+        "fast-stream": "git+ssh://git@git.joyent.com:fast-stream.git#0323245",
         "jsprim": "0.5.0",
         "node-uuid": "1.2.0",
         "once": "1.1.1",
