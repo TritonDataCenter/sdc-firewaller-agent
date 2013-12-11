@@ -19,12 +19,11 @@
 <exec_method
   type="method"
   name="start"
-  exec="/usr/bin/ctrun -l child -o noorphan /usr/node/bin/node --abort_on_uncaught_exception @@PREFIX@@/lib/node_modules/firewaller/sbin/firewaller &amp;"
+  exec="/usr/bin/ctrun -l child -o noorphan @@PREFIX@@/lib/node_modules/firewaller/node/bin/node --abort_on_uncaught_exception @@PREFIX@@/lib/node_modules/firewaller/sbin/firewaller &amp;"
   timeout_seconds="60">
   <method_context>
     <method_credential user="root" group="staff"/>
     <method_environment>
-      <envvar name="NODE_PATH" value="/usr/node/0.8/node_modules:/usr/vm/node_modules"/>
       <envvar name="PATH" value="@@PREFIX@@/bin:/usr/local/bin:/opt/local/bin:/usr/bin:/usr/sbin:/bin"/>
     </method_environment>
   </method_context>

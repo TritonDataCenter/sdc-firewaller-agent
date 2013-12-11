@@ -1,4 +1,4 @@
-#!/usr/node/bin/node --abort_on_uncaught_exception
+#!/opt/smartdc/agents/lib/node_modules/firewaller/node/bin/node --abort_on_uncaught_exception
 
 /*
  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
@@ -7,10 +7,10 @@
  */
 
 var assert = require('assert-plus');
-var bunyan = require('/usr/node/node_modules/bunyan');
+var bunyan = require('bunyan');
 var config = require('../lib/config');
-var fs = require('fs');
 var firewaller = require('../lib/agent');
+var fs = require('fs');
 var path = require('path');
 var VError = require('verror').VError;
 

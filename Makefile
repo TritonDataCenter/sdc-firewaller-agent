@@ -26,12 +26,8 @@ REPO_MODULES	 = src/node-dummy
 SMF_MANIFESTS_IN = smf/manifests/firewaller.xml.in
 SDC_CLIENTS		 = node_modules/sdc-clients
 
-# Should be the same version as the platform's /usr/node/bin/node.
-#NODE_PREBUILT_VERSION=v0.8.20
-#NODE_PREBUILT_TAG=gz
-
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_VERSION=v0.8.20
+	NODE_PREBUILT_VERSION=v0.10.21
 	NODE_PREBUILT_TAG=gz
 endif
 
@@ -41,7 +37,6 @@ ifeq ($(shell uname -s),SunOS)
 else
 	NPM_EXEC :=
 	NPM = npm
-	#include ./tools/mk/Makefile.node.defs
 endif
 include ./tools/mk/Makefile.smf.defs
 
@@ -89,6 +84,7 @@ release: all docs $(SMF_MANIFESTS)
     $(TOP)/sbin \
     $(TOP)/smf \
     $(DSTDIR)
+	cp -PR $(NODE_INSTALL) $(DSTDIR)/node
 	# Cleanup dev / unused bits
 	rm -rf $(DSTDIR)/node_modules/nodeunit
 	(cd $(RELSTAGEDIR) && $(TAR) -zcf $(TOP)/$(RELEASE_TARBALL) *)
