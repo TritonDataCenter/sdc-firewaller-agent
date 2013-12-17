@@ -61,8 +61,7 @@ $(TAP): node_modules
 # against the platform node
 node_modules: | $(NPM_EXEC)
 	$(NPM) install
-	rm -rf node_modules/microtime
-	rm -rf node_modules/dtrace-provider
+	cp -r deps/fw node_modules/
 
 CLEAN_FILES += $(TAP) ./node_modules/tap
 
