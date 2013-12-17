@@ -52,37 +52,45 @@ config.sdc(function (err, sdcConfig) {
 
     config.getSysinfoValue('UUID', function (err2, uuid) {
         if (err2) {
-            LOG.error(err2, 'Error getting sysinfo');
+            LOG.error(err2, 'Error getting sysinfo UUID');
             return;
         }
 
-        CONFIG.log = LOG;
-        CONFIG.serverUUID = uuid;
-        CONFIG.fwapi.host = sdcConfig.fwapi_domain;
-        CONFIG.vmapi = { host: sdcConfig.vmapi_domain };
-
-        var agent;
-        try {
-            agent = firewaller.create(CONFIG);
-        } catch (createErr) {
-            LOG.error(createErr, 'Error creating agent');
-            return;
-        }
-
-        agent.sync(function (err3) {
-            if (err3) {
-                LOG.error(err3, 'Error doing initial sync');
+        config.getSysinfoValue('Live Image', function (lErr, image) {
+            if (lErr) {
+                LOG.error(lErr, 'Error getting sysinfo Live Image');
                 return;
             }
 
-            agent.connect(function (err4) {
-                if (err4) {
-                    LOG.error(err4, 'Error connecting to %s',
-                        sdcConfig.fwapi_domain);
+            CONFIG.log = LOG;
+            CONFIG.serverUUID = uuid;
+            CONFIG.imageVersion = image;
+            CONFIG.fwapi.host = sdcConfig.fwapi_domain;
+            CONFIG.vmapi = { host: sdcConfig.vmapi_domain };
+
+            var agent;
+            try {
+                agent = firewaller.create(CONFIG);
+            } catch (createErr) {
+                LOG.error(createErr, 'Error creating agent');
+                return;
+            }
+
+            agent.sync(function (err3) {
+                if (err3) {
+                    LOG.error(err3, 'Error doing initial sync');
                     return;
                 }
 
-                LOG.info('Connected to %s', sdcConfig.fwapi_domain);
+                agent.connect(function (err4) {
+                    if (err4) {
+                        LOG.error(err4, 'Error connecting to %s',
+                            sdcConfig.fwapi_domain);
+                        return;
+                    }
+
+                    LOG.info('Connected to %s', sdcConfig.fwapi_domain);
+                });
             });
         });
     });
