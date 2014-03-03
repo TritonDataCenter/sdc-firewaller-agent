@@ -9,6 +9,10 @@
             }
         }
     },
+    "recentTasksLength": 50,
+    "restify": {
+        "port": 2021
+    },
     "retry": {
         "maxTimeout": 6000,
         "minTimeout": 100,

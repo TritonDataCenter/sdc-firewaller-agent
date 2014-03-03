@@ -1,7 +1,7 @@
 #!/opt/smartdc/agents/lib/node_modules/firewaller/node/bin/node --abort_on_uncaught_exception
 
 /*
- * Copyright (c) 2013, Joyent, Inc. All rights reserved.
+ * Copyright (c) 2014, Joyent, Inc. All rights reserved.
  *
  * Firewaller agent
  */
