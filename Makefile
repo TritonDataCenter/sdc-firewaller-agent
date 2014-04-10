@@ -9,7 +9,7 @@
 #
 # Tools
 #
-TAP		:= ./node_modules/.bin/tap
+NODEUNIT		:= ./node_modules/.bin/nodeunit
 
 
 
@@ -50,24 +50,30 @@ DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 # Repo-specific targets
 #
 .PHONY: all
-all: $(SMF_MANIFESTS) | $(TAP) $(REPO_DEPS) $(SDC_CLIENTS)
+all: $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS) $(SDC_CLIENTS)
 
 $(SDC_CLIENTS):
 	./tools/mk-sdc-clients-light.sh $(shell json -f package.json platformDependencies.sdc-clients | cut -d'#' -f2) $(SDC_CLIENTS) fwapi.js vmapi.js
 
-$(TAP): node_modules
+$(NODEUNIT): node_modules
 
 # Remove binary modules - we use the ones in the platform that are built
 # against the platform node
-node_modules: | $(NPM_EXEC)
+node_modules: | $(NPM_EXEC) node_modules/fw
 	$(NPM) install
+
+node_modules/fw: deps/fw/lib/*
 	cp -r deps/fw node_modules/
 
-CLEAN_FILES += $(TAP) ./node_modules/tap
+CLEAN_FILES += $(NODEUNIT) ./node_modules/nodeunit
 
 .PHONY: test
-test: $(TAP)
-	TAP=1 $(TAP) test/*.test.js
+test: $(NODEUNIT)
+	@(for F in test/unit/*.test.js; do \
+		echo "# $$F" ;\
+		$(NODEUNIT) --reporter tap $$F ;\
+		[[ $$? == "0" ]] || exit 1; \
+	done)
 
 .PHONY: release
 release: all docs $(SMF_MANIFESTS)
