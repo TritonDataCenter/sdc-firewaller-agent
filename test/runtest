@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2013, Joyent, Inc. All rights reserved.
+# Copyright (c) 2014, Joyent, Inc. All rights reserved.
 #
-# Run a single NAPI test of any type.
+# Run a single firewaller test of any type.
 
 TOP=$(cd $(dirname $0)/../; pwd)
 NODE_INSTALL=$TOP/node

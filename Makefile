@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, Joyent, Inc. All rights reserved.
+# Copyright (c) 2014, Joyent, Inc. All rights reserved.
 #
 # Firewaller agent Makefile
 #
@@ -59,10 +59,8 @@ $(NODEUNIT): node_modules
 
 # Remove binary modules - we use the ones in the platform that are built
 # against the platform node
-node_modules: | $(NPM_EXEC) node_modules/fw
+node_modules: | $(NPM_EXEC)
 	$(NPM) install
-
-node_modules/fw: deps/fw/lib/*
 	cp -r deps/fw node_modules/
 
 CLEAN_FILES += $(NODEUNIT) ./node_modules/nodeunit
