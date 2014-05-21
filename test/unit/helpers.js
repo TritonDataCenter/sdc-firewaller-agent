@@ -34,6 +34,7 @@ var uuidSort = mocks._uuidSort;
 var AGENT;
 var CUR_IP = 1;
 var ID = 1;
+var INITIAL_DATA;
 var LOCAL_SERVER = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 var STREAM;
 var OWNER_UUID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
@@ -43,6 +44,24 @@ var OTHER_SERVER = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 
 // --- Internal helpers
 
+
+
+/**
+ * Returns the initial mock data
+ */
+function initialMockData() {
+    if (!INITIAL_DATA) {
+        // mock out package.json so the agent doesn't die trying to figure
+        // out its version
+        var pkgJson = path.normalize(__dirname + '/../../package.json');
+        INITIAL_DATA = {
+            fs: {}
+        };
+        INITIAL_DATA.fs[pkgJson] = JSON.stringify({ version: 'unit-test' });
+    }
+
+    return clone(INITIAL_DATA);
+}
 
 
 /**
@@ -71,6 +90,15 @@ function readJSONdir(dir) {
 
 
 /**
+ * Reset all mock data with empty values
+ */
+function resetMockData() {
+    mocks._setMockData();
+    fwMocks.reset({ initialValues: initialMockData() });
+}
+
+
+/**
  * Initialize all mocks
  */
 function setupMocks() {
@@ -80,14 +108,6 @@ function setupMocks() {
             localMocks[m] = mocks[m];
         }
     }
-
-    // mock out package.json so the agent doesn't die trying to figure
-    // out its version
-    var pkgJson = path.normalize(__dirname + '/../../package.json');
-    var initData = {
-        fs: {}
-    };
-    initData.fs[pkgJson] = JSON.stringify({ version: 'unit-test' });
 
     var allowed = [
         './add-rule',
@@ -124,7 +144,7 @@ function setupMocks() {
 
     fwMocks.setup({
         allowed: allowed,
-        initialValues: initData,
+        initialValues: initialMockData(),
         mocks: localMocks
     });
 
@@ -350,6 +370,7 @@ module.exports = {
     localRules: localRules,
     localRVMs: localRVMs,
     OWNER_UUID: OWNER_UUID,
+    reset: resetMockData,
     rule: generateRule,
     send: sendMessage,
     set: mocks._setMockData,

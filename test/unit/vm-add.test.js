@@ -233,6 +233,60 @@ exports['add'] = {
 };
 
 
+exports['firewall_enabled=false'] = {
+    'setup': function (t) {
+        h.reset();
+
+        d.rules = [
+            h.rule({
+                created_by: 'fwapi',
+                owner_uuid: owners[1],
+                rule: 'FROM ip 10.0.1.1 TO tag internal ALLOW tcp PORT 80'
+            })
+        ];
+
+        d.vms = [
+            // local:
+            h.vm({
+                firewall_enabled: false,
+                local: true,
+                owner_uuid: owners[1],
+                tags: { internal: true }
+            }),
+            // on another server:
+            h.vm({
+                firewall_enabled: false,
+                owner_uuid: owners[1],
+                tags: { internal: true }
+            }),
+            // owned by someone else:
+            h.vm({ owner_uuid: owners[0], tags: { internal: true } }),
+            h.vm()
+        ];
+
+        h.set({
+            fwapiRules: d.rules,
+            vms: d.vms
+        });
+
+        return t.done();
+    },
+
+    'add rule: no local VMs with firewall enabled': function (t) {
+        mod_rule.add(t, d.rules[0]);
+    },
+
+    // There are no local VMs, so the rules should not be added
+
+    'after adding global rule': function (t) {
+        t.deepEqual(h.localRules(), [], 'rule not added');
+        t.deepEqual(h.localRVMs(), [], 'no remote VMs added');
+
+        return t.done();
+    }
+};
+
+
 
 // --- Teardown
 

@@ -272,6 +272,10 @@ function setMockData(data) {
     RESOLVE = [];
     VMS = {};
 
+    if (!data) {
+        data = {};
+    }
+
     LOG.debug(data, 'setMockData');
     if (data.fwapiRules) {
         data.fwapiRules.forEach(function (r) {
