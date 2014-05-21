@@ -5,7 +5,10 @@
  */
 
 var h = require('./helpers');
+var mod_cache = require('../lib/cache');
+var mod_rule = require('../lib/rule');
 var mod_uuid = require('node-uuid');
+var mod_vm = require('../lib/vm');
 
 
 
@@ -13,19 +16,16 @@ var mod_uuid = require('node-uuid');
 
 
 
+// Set this to any of the exports in this file to only run that test,
+// plus setup and teardown
+var runOne;
 var agent;
-var owners = [ mod_uuid.v4() ];
+var owners = [ mod_uuid.v4(), mod_uuid.v4() ];
 var d = {
     cache: {},
     rules: [],
     rvms: [],
-    vms: [
-        h.vm(),
-        h.vm({ owner_uuid: owners[0], tags: { role: 'db' } }),
-        h.vm({ owner_uuid: owners[0] }),
-        h.vm({ owner_uuid: owners[0], tags: { role: 'qa' } }),
-        h.vm({ owner_uuid: owners[0], tags: { role: 'test' } })
-    ]
+    vms: [ ]
 };
 
 
@@ -50,24 +50,33 @@ exports.setup = function (t) {
 
 exports['add'] = {
     'setup': function (t) {
-        d.rules.push(h.rule({
-            created_by: 'fwapi',
-            description: 'allow pings to all VMs',
-            global: true,
-            rule: 'FROM any TO all vms ALLOW icmp TYPE 8 CODE 0'
-        }));
+        d.rules = [
+            h.rule({
+                created_by: 'fwapi',
+                description: 'allow pings to all VMs',
+                global: true,
+                rule: 'FROM any TO all vms ALLOW icmp TYPE 8 CODE 0'
+            }),
+            h.rule({
+                created_by: 'fwapi',
+                owner_uuid: owners[0],
+                rule: 'FROM tag role = db TO tag role = www ALLOW tcp PORT 80'
+            }),
+            h.rule({
+                created_by: 'fwapi',
+                owner_uuid: owners[0],
+                rule:
+                    'FROM tag role = test TO tag role = qa ALLOW tcp PORT 8080'
+            })
+        ];
 
-        d.rules.push(h.rule({
-            created_by: 'fwapi',
-            owner_uuid: owners[0],
-            rule: 'FROM tag role = db TO tag role = www ALLOW tcp PORT 80'
-        }));
-
-        d.rules.push(h.rule({
-            created_by: 'fwapi',
-            owner_uuid: owners[0],
-            rule: 'FROM tag role = test TO tag role = qa ALLOW tcp PORT 8080'
-        }));
+        d.vms = [
+            h.vm(),
+            h.vm({ owner_uuid: owners[0], tags: { role: 'db' } }),
+            h.vm({ owner_uuid: owners[0] }),
+            h.vm({ owner_uuid: owners[0], tags: { role: 'qa' } }),
+            h.vm({ owner_uuid: owners[0], tags: { role: 'test' } })
+        ];
 
         h.set({
             fwapiRules: d.rules,
@@ -78,10 +87,7 @@ exports['add'] = {
     },
 
     'add global rule: no local VMs': function (t) {
-        h.send('fw.add_rule', d.rules[0], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.add(t, d.rules[0]);
     },
 
     // There are no local VMs, so the rules should not be added
@@ -94,10 +100,7 @@ exports['add'] = {
     },
 
     'add tag rule: no local VMs': function (t) {
-        h.send('fw.add_rule', d.rules[0], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.add(t, d.rules[1]);
     },
 
     'after adding tag rule': function (t) {
@@ -110,10 +113,7 @@ exports['add'] = {
     // There are no rules on this node, so the VM should not be added:
 
     'add vm': function (t) {
-        h.send('vm.add', d.vms[0], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_vm.add(t, d.vms[0]);
     },
 
     'after first vm.add': function (t) {
@@ -150,10 +150,7 @@ exports['add'] = {
             vms: d.vms
         });
 
-        h.send('vm.add', vm, function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_vm.add(t, vm);
     },
 
     // Adding this local VM should cause both rules to be added, as well as the
@@ -165,19 +162,8 @@ exports['add'] = {
         t.deepEqual(h.localRVMs(), [ h.vmToRVM(d.vms[1]) ],
             'remote VM added');
 
-        d.cache[owners[0]] = {
-            allVMs: false,
-            tags: {
-                role: {
-                    values: {
-                        db: 1
-                    }
-                }
-            },
-            vms: {}
-        };
-
-        t.deepEqual(agent.cache.cache, d.cache, 'tags added to cache');
+        mod_cache.addTag(d.cache, owners[0], 'role', 'db');
+        t.deepEqual(agent.cache.cache, d.cache, 'tag role=db added to cache');
         t.equal(h.vmapiReqs().length, 1, '1 request made to VMAPI');
 
         var resolveReqs = h.fwapiReqs();
@@ -218,10 +204,7 @@ exports['add'] = {
             vms: d.vms
         });
 
-        h.send('vm.update', d.vms[d.idx], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_vm.update(t, d.vms[d.idx]);
     },
 
     'after updating VM': function (t) {
@@ -229,20 +212,8 @@ exports['add'] = {
         h.equalSorted(t, h.localRVMs(), h.vmToRVM([ d.vms[1], d.vms[4] ]),
             'remote VM added');
 
-        d.cache[owners[0]] = {
-            allVMs: false,
-            tags: {
-                role: {
-                    values: {
-                        db: 1,
-                        test: 1
-                    }
-                }
-            },
-            vms: {}
-        };
-
-        t.deepEqual(agent.cache.cache, d.cache, 'tags added to cache');
+        mod_cache.addTag(d.cache, owners[0], 'role', 'test');
+        t.deepEqual(agent.cache.cache, d.cache, 'tag role=test added to cache');
         t.equal(h.vmapiReqs().length, 2, '1 more request made to VMAPI');
 
         var resolveReqs = h.fwapiReqs();
@@ -262,8 +233,6 @@ exports['add'] = {
 };
 
 
-// XXX: add VM without firewall_enabled
-
 
 // --- Teardown
 
@@ -272,3 +241,14 @@ exports['add'] = {
 exports.teardown = function (t) {
     h.teardown(t);
 };
+
+
+
+// Use to run only one test in this file:
+if (runOne) {
+    module.exports = {
+        setup: exports.setup,
+        oneTest: runOne,
+        teardown: exports.teardown
+    };
+}
