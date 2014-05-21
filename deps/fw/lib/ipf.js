@@ -112,9 +112,9 @@ function zoneReload(uuid, conf, log, callback) {
 
     // Flush (-F) all (-a) rules from the inactive list (-I) for the
     // GZ-controlled ipf stack (-G) for zone uuid
-    var flushOpts =['-GIFa', uuid];
+    var flushOpts = ['-GIFa', uuid];
     if (OLD) {
-        flushOpts =['-IFa', uuid];
+        flushOpts = ['-IFa', uuid];
     }
     return ipf(flushOpts, log, function (err, res) {
         if (err) {
