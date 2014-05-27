@@ -9,6 +9,7 @@ var mod_cache = require('../lib/cache');
 var mod_rule = require('../lib/rule');
 var mod_uuid = require('node-uuid');
 var mod_vm = require('../lib/vm');
+var util = require('util');
 
 
 
@@ -19,14 +20,14 @@ var mod_vm = require('../lib/vm');
 var agent;
 var owners = [ mod_uuid.v4() ];
 var d = {
-    cache: {},
+    exp: {
+        cache: {},
+        rules: [],
+        rvms: []
+    },
     rules: [],
     rvms: [],
-    vms: [
-        h.vm(),
-        h.vm({ owner_uuid: owners[0] }),
-        h.vm({ owner_uuid: owners[0], tags: { web: true } })
-    ]
+    vms: []
 };
 
 
@@ -50,11 +51,20 @@ exports.setup = function (t) {
 
 exports['update firewall_enabled'] = {
     'setup': function (t) {
-        d.rules.push(h.rule({
-            created_by: 'fwapi',
-            owner_uuid: owners[0],
-            rule: 'FROM tag web = true TO tag private = true ALLOW tcp PORT 22'
-        }));
+        d.vms = [
+            h.vm(),
+            h.vm({ owner_uuid: owners[0] }),
+            h.vm({ owner_uuid: owners[0], tags: { web: true } })
+        ];
+
+        d.rules = [
+            h.rule({
+                created_by: 'fwapi',
+                owner_uuid: owners[0],
+                rule:'FROM tag web = true TO tag private = true '
+                    + 'ALLOW tcp PORT 22'
+            })
+        ];
 
         h.set({
             fwapiRules: d.rules,
@@ -71,10 +81,11 @@ exports['update firewall_enabled'] = {
     },
 
     'after rule add': function (t) {
-        t.deepEqual(h.localRules(), [], 'rule not added');
+        mod_rule.localEquals(t, d.exp.rules, 'rule not added');
         t.deepEqual(h.localRVMs(), [], 'no remote VMs added');
-        t.deepEqual(agent.cache.cache, d.cache, 'cache empty');
+        t.deepEqual(agent.cache.cache, d.exp.cache, 'cache empty');
 
+        // d.vms[3]
         d.vms.push(h.vm({
             firewall_enabled: false,
             local: true,
@@ -92,13 +103,13 @@ exports['update firewall_enabled'] = {
     // VM has firewall_enabled set to false, so no additional rules or remote
     // VMs should be pulled down
     'add local vm with firewall disabled': function (t) {
-        mod_vm.add(t, d.vms[0]);
+        mod_vm.add(t, d.vms[3]);
     },
 
     'after vm add': function (t) {
-        t.deepEqual(h.localRules(), [], 'rule not added');
+        mod_rule.localEquals(t, d.exp.rules, 'rule not added');
         t.deepEqual(h.localRVMs(), [], 'no remote VMs added');
-        t.deepEqual(agent.cache.cache, d.cache, 'cache empty');
+        t.deepEqual(agent.cache.cache, d.exp.cache, 'cache empty');
 
         return t.done();
     },
@@ -122,12 +133,93 @@ exports['update firewall_enabled'] = {
     },
 
     'after vm update': function (t) {
-        t.deepEqual(h.localRules(), [ d.rules[0] ], 'rule added');
-        t.deepEqual(h.localRVMs(), [ h.vmToRVM(d.vms[2]) ], 'remote VM added');
+        d.exp.rules = [ d.rules[0] ];
+        d.exp.rvms = [ h.vmToRVM(d.vms[2]) ];
+
+        mod_rule.localEquals(t, d.exp.rules, 'rule added');
+        t.deepEqual(h.localRVMs(), d.exp.rvms, 'remote VM added');
         t.equal(h.vmapiReqs().length, 1, '1 request made to VMAPI');
 
-        mod_cache.addTag(d.cache, owners[0], 'web', 'true');
-        t.deepEqual(agent.cache.cache, d.cache, 'tag web=true added to cache');
+        mod_cache.addTag(d.exp.cache, owners[0], 'web', 'true');
+        t.deepEqual(agent.cache.cache, d.exp.cache,
+            'tag web=true added to cache');
+
+        return t.done();
+    },
+
+    'add second local vm with firewall disabled': function (t) {
+        // d.vms[4]
+        d.vms.push(h.vm({
+            firewall_enabled: false,
+            local: true,
+            owner_uuid: owners[0]
+        }));
+
+        h.set({
+            vms: d.vms
+        });
+
+        mod_vm.add(t, d.vms[4]);
+    },
+
+    'after second vm add': function (t) {
+        // Nothing on-disk should have changed
+        mod_rule.localEquals(t, d.exp.rules, 'rules unchanged');
+        t.deepEqual(h.localRVMs(), d.exp.rvms, 'remote VMs unchanged');
+        t.deepEqual(agent.cache.cache, d.exp.cache, 'cache unchanged');
+
+        return t.done();
+    },
+
+    'add rule to second VM': function (t) {
+        // d.rules[1]
+        d.rules.push(h.rule({
+            created_by: 'fwapi',
+            owner_uuid: owners[0],
+            rule: util.format('FROM any TO vm %s ALLOW tcp PORT 8080',
+                d.vms[4].uuid)
+        }));
+
+        h.set({
+            fwapiRules: d.rules,
+            vms: d.vms
+        });
+
+        mod_rule.add(t, d.rules[1]);
+    },
+
+    'after second rule add': function (t) {
+        // Nothing on-disk should have changed, since the VM referred to in
+        // the added rule has its firewall disabled
+        mod_rule.localEquals(t, d.exp.rules, 'rules unchanged');
+        t.deepEqual(h.localRVMs(), d.exp.rvms, 'remote VMs unchanged');
+        t.deepEqual(agent.cache.cache, d.exp.cache, 'cache unchanged');
+
+        return t.done();
+    },
+
+    'update second vm with firewall enabled': function (t) {
+        d.vms[d.vms.length - 1].firewall_enabled = true;
+        h.set({
+            resolve: [ {
+                allVMs: false,
+                owner_uuid: owners[0],
+                rules: [ d.rules[1] ],
+                tags: {},
+                vms: []
+            } ],
+            vms: d.vms
+        });
+
+        mod_vm.update(t, d.vms[d.vms.length - 1]);
+    },
+
+    'after second vm update': function (t) {
+        // Rule referencing the second VM should have been added
+        d.exp.rules.push(d.rules[1]);
+        mod_rule.localEquals(t, d.exp.rules, 'rule added');
+        t.deepEqual(h.localRVMs(), d.exp.rvms, 'remote VMs unchanged');
+        t.deepEqual(agent.cache.cache, d.exp.cache, 'cache unchanged');
 
         return t.done();
     }

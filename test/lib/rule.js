@@ -18,7 +18,16 @@ function add(t, rule) {
 }
 
 
+/**
+ * Confirms the local list of rules is equal to the given list
+ */
+function localEquals(t, exp, desc) {
+    h.equalSorted(t, h.localRules(), exp, desc);
+}
+
+
 
 module.exports = {
-    add: add
+    add: add,
+    localEquals: localEquals
 };
