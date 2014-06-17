@@ -27,7 +27,7 @@ SMF_MANIFESTS_IN = smf/manifests/firewaller.xml.in
 SDC_CLIENTS		 = node_modules/sdc-clients
 
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_VERSION=v0.10.21
+	NODE_PREBUILT_VERSION=v0.10.26
 	NODE_PREBUILT_TAG=gz
 endif
 
