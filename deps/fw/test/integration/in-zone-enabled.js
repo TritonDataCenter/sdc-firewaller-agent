@@ -31,7 +31,7 @@ exports['enable / disable'] = {
                 nics: [
                     {
                         nic_tag: 'admin',
-                        ip: '10.4.0.30',
+                        ip: '10.4.0.31',
                         netmask: '255.255.255.0'
                     }
                 ]
@@ -42,7 +42,7 @@ exports['enable / disable'] = {
         });
     },
 
-    'fw status after create': function (t) {
+    'GZ fw status after create': function (t) {
         d.vm = mod_vm.lastCreated();
         t.ok(d.vm, 'have last created VM');
 
@@ -54,7 +54,20 @@ exports['enable / disable'] = {
         });
     },
 
-    'update: disable firewall': function (t) {
+    'zone fw status after create': function (t) {
+        mod_fw.zoneRunning(t, {
+            uuid: d.vm.uuid,
+            exp: false
+        });
+    },
+
+    'enable zone fw': function (t) {
+        mod_fw.zoneEnable(t, {
+            uuid: d.vm.uuid
+        });
+    },
+
+    'update: disable GZ firewall': function (t) {
         mod_vm.update(t, {
             uuid: d.vm.uuid,
             params: {
@@ -66,7 +79,7 @@ exports['enable / disable'] = {
         });
     },
 
-    'fw status after disable': function (t) {
+    'GZ fw status after disable': function (t) {
         mod_fw.status(t, {
             uuid: d.vm.uuid,
             partialExp: {
@@ -75,7 +88,14 @@ exports['enable / disable'] = {
         });
     },
 
-    'update: re-enable firewall': function (t) {
+    'zone fw status after GZ disable': function (t) {
+        mod_fw.zoneRunning(t, {
+            uuid: d.vm.uuid,
+            exp: true
+        });
+    },
+
+    'update: re-enable GZ firewall': function (t) {
         mod_vm.update(t, {
             uuid: d.vm.uuid,
             params: {
@@ -93,6 +113,13 @@ exports['enable / disable'] = {
             partialExp: {
                 running: true
             }
+        });
+    },
+
+    'zone fw status after GZ re-enable': function (t) {
+        mod_fw.zoneRunning(t, {
+            uuid: d.vm.uuid,
+            exp: true
         });
     }
 };
