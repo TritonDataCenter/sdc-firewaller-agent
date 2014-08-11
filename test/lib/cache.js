@@ -41,21 +41,32 @@ function addTag(cache, owner, tag, val) {
         oCache.tags[tag] = {};
     }
 
-    if (val) {
-        if (!oCache.tags[tag].hasOwnProperty('values')) {
-            oCache.tags[tag].values = {};
-        }
+    if (!oCache.tags[tag].hasOwnProperty('values')) {
+        oCache.tags[tag].values = {};
+    }
 
+    if (val) {
         oCache.tags[tag].values[val] = 1;
 
     } else {
         oCache.tags[tag].all = true;
-        delete oCache.tags[tag].values;
+        oCache.tags[tag].values = {};
     }
+}
+
+
+/**
+ * Add a VM to a cache object
+ */
+function addVM(cache, owner, vm) {
+    var oCache = createEmptyCache(cache, owner);
+
+    oCache.vms[vm] = 1;
 }
 
 
 
 module.exports = {
-    addTag: addTag
+    addTag: addTag,
+    addVM: addVM
 };

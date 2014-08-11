@@ -21,6 +21,7 @@ var mocks = require('./mocks');
 var mod_uuid = require('node-uuid');
 var once = require('once');
 var path = require('path');
+var pred = require('../../lib/pred');
 var stream = require('fast-stream');
 var util = require('util');
 var uuidSort = mocks._uuidSort;
@@ -95,6 +96,11 @@ function readJSONdir(dir) {
 function resetMockData() {
     mocks._setMockData();
     fwMocks.reset({ initialValues: initialMockData() });
+
+    // Add the vmadm mock function - it gets blown away by fwMocks.reset()
+    var cpMock = fwMocks.values.child_process;
+    cpMock['/usr/sbin/vmadm'] = mocks._execFileVmadm;
+    fwMocks.mocks.fs.createWriteStream = mocks._createWriteStream;
 }
 
 
@@ -116,13 +122,16 @@ function setupMocks() {
         './endpoints',
         './fw',
         './ping',
+        './pred',
         './rules',
+        './rvms',
         './status',
         './sync',
         './tasks',
         './update-rule',
         './vm',
         './vmapi',
+        './vms',
         './vm-add',
         './vm-delete',
         './vm-update',
@@ -290,6 +299,19 @@ function generateVM(override) {
 
 
 /**
+ * Returns the last request made to VMAPI
+ */
+function lastVmapiReq() {
+    var reqs = mocks._vmapiReqs();
+    if (!reqs || reqs.length === 0) {
+        return {};
+    }
+
+    return reqs[reqs.length - 1];
+}
+
+
+/**
  * Returns an array of the rules on the local CN
  */
 function localRules() {
@@ -308,8 +330,50 @@ function localRVMs() {
 /**
  * Generate a VMAPI query string based on the array elements
  */
-function vmapiQueryStr(elements) {
-    return '(&' + elements.join('') + ')';
+function vmapiQuery(opts) {
+    return '';
+}
+
+
+/**
+ * Generate a VMAPI query string based on the array elements
+ */
+function vmapiReq(opts) {
+    assert.object(opts, 'opts');
+
+    var filt = pred.filt.allVMs({
+        owner_uuid: opts.owner_uuid,
+        serverUUID: opts.server_uuid || LOCAL_SERVER
+    });
+    var orFilter = [];
+
+    (opts.vms || []).forEach(function (vm) {
+        orFilter.push(pred.filt.eq('uuid', vm));
+    });
+
+    (opts.tags || []).forEach(function (tag) {
+        orFilter.push(pred.filt.eq('tag.' + tag[0], tag[1]));
+    });
+
+    if (orFilter.length !== 0) {
+        if (orFilter.length === 1) {
+            filt.and.push(orFilter[0]);
+        } else {
+            filt.and.push({ or: orFilter});
+        }
+    }
+
+    return {
+        path: '/vms',
+        query: {
+            predicate: filt
+        },
+        headers: {
+            // We increment our fake request ID by 1 every time,
+            // so this is the last req_id:
+            'x-request-id': (ID - 1).toString()
+        }
+    };
 }
 
 
@@ -322,7 +386,7 @@ function sendMessage(name, value, callback) {
     var toSend = {
         id: id,
         name: name,
-        req_id: id,
+        req_id: id.toString(),
         value: value
     };
 
@@ -361,12 +425,8 @@ function teardown(t) {
 module.exports = {
     createAgent: createAgent,
     equalSorted: equalSorted,
-    fmt: {
-        owner_uuid: '(owner_uuid=%s)',
-        tag: '(tags=*%s=%s*)',
-        vm: '(uuid=%s)'
-    },
     fwapiReqs: mocks._fwapiReqs,
+    lastVmapiReq: lastVmapiReq,
     localRules: localRules,
     localRVMs: localRVMs,
     OWNER_UUID: OWNER_UUID,
@@ -374,14 +434,11 @@ module.exports = {
     rule: generateRule,
     send: sendMessage,
     set: mocks._setMockData,
-    str: {
-        server: util.format('(!(server_uuid=%s))', LOCAL_SERVER),
-        state: '(!(state=destroyed))(!(state=failed))(!(state=provisioning))'
-    },
     teardown: teardown,
     uuidSort: uuidSort,
     vm: generateVM,
-    vmapiQuery: vmapiQueryStr,
+    vmapiQuery: vmapiQuery,
+    vmapiReq: vmapiReq,
     vmapiReqs: mocks._vmapiReqs,
     vmToRVM: convertVMtoRVM
 };

@@ -10,9 +10,14 @@ var h = require('../unit/helpers');
 /**
  * Adds a rule, confirms it was received, and ends the test.
  */
-function add(t, rule) {
+function add(t, rule, callback) {
     h.send('fw.add_rule', rule, function (msg) {
         t.ok(msg, 'message received');
+
+        if (callback) {
+            return callback(null, msg);
+        }
+
         return t.done();
     });
 }

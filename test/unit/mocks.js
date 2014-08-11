@@ -9,6 +9,8 @@ var bunyan = require('bunyan');
 var clone = require('clone');
 var fwMocks = require('../../node_modules/fw/test/lib/mocks');
 var ldapjs = require('ldapjs');
+var mod_log = require('../lib/log');
+var pred = require('../../deps/vmapi/lib/common/predicate');
 var util = require('util');
 
 
@@ -21,10 +23,7 @@ var FWAPI_REQS = {};
 var FWAPI_RULES = {};
 var LOCAL_RVMS = {};
 var LOCAL_SERVER = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
-var LOG = bunyan.createLogger({
-    name: 'mock',
-    level: process.env.LOG_LEVEL || 'fatal'
-});
+var LOG = mod_log.child({ component: 'mock' });
 var FW_LOG = LOG.child({ component: 'fw' });
 var VM_LOG = LOG.child({ component: 'vmadm' });
 var VMAPI_REQS = [];
@@ -196,26 +195,38 @@ function mockVMAPI(opts) {
 }
 
 
-mockVMAPI.prototype.listVms = function listVMs(params, callback) {
+mockVMAPI.prototype.get = function vmsGet(params, callback) {
     assert.object(params, 'params');
-    assert.string(params.query, 'params.query');
+    assert.string(params.path, 'params.path');
+    assert.object(params.query, 'params.query');
+    assert.string(params.query.predicate, 'params.query.predicate');
+    assert.object(params.headers, 'params.headers');
+    assert.string(params.headers['x-request-id'],
+        'params.headers.x-request-id');
 
-    var filter = ldapjs.parseFilter(params.query);
+    var parsedPred = JSON.parse(params.query.predicate);
+    var ldapQuery = pred.toLdapQuery(parsedPred);
+    var filter = ldapjs.parseFilter(ldapQuery);
 
-    VMAPI_REQS.push({ path: 'listVMs', params: clone(params) });
+    LOG.debug({ pred: parsedPred, query: ldapQuery }, 'listVMs: query');
+
+    // Don't record the stringified predicate, to make diff'ing easier
+    var clonedParams = clone(params);
+    clonedParams.query.predicate = parsedPred;
+    VMAPI_REQS.push(clonedParams);
 
     var vms = [];
     for (var v in VMS) {
         var vm = clone(VMS[v]);
-        // VMAPI has a funny syntax for querying tags: you have to query them
-        // with (tags=*<tag key>=<tag value>*). To get around this, create a
-        // new VM object that has all of the tags squashed into a format that
-        // allows matching with those query strings.
+        // VMAPI has a funny syntax for storing tags:
+        // (tags=*-<tag key>=<tag value>-*). pred.toLdapQuery assumes this
+        // format, so create a new VM object that has all of the tags squashed
+        // into that format.
         if (vm.hasOwnProperty('tags')) {
             var tags = [];
 
             for (var t in vm.tags) {
-                tags.push(t + '=' + vm.tags[t]);
+                tags.push('-' + t + '=' + vm.tags[t] + '-');
             }
 
             vm.tags = tags.join(',');

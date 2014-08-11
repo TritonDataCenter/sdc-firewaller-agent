@@ -97,13 +97,9 @@ exports['add'] = {
 
         t.deepEqual(agent.cache.cache, d.cache, 'allVMs added to cache');
         t.equal(h.vmapiReqs().length, 1, '1 request made to VMAPI');
-        t.deepEqual(h.vmapiReqs()[0].params, {
-            query: h.vmapiQuery([
-                fmt(h.fmt.owner_uuid, owners[0]),
-                h.str.server,
-                h.str.state
-                ])
-            }, 'VMAPI query correct');
+        t.deepEqual(h.lastVmapiReq(), h.vmapiReq({
+            owner_uuid: owners[0]
+        }), 'VMAPI query correct');
 
         return t.done();
     },
@@ -234,14 +230,12 @@ exports['update'] = {
         t.equal(h.vmapiReqs().length, d.vmapiIdx + 1,
             '1 new request made to VMAPI');
 
-        t.deepEqual(h.vmapiReqs()[d.vmapiIdx].params, {
-            query: h.vmapiQuery([
-                fmt(h.fmt.tag, 'foo', 'bar'),
-                h.str.state,
-                fmt(h.fmt.owner_uuid, owners[1]),
-                h.str.server
-                ])
-            }, 'VMAPI query correct');
+        t.deepEqual(h.lastVmapiReq(), h.vmapiReq({
+                owner_uuid: owners[1],
+                tags: [
+                    [ 'foo', 'bar' ]
+                ]
+            }), 'VMAPI query correct');
 
         return t.done();
     },
@@ -274,14 +268,10 @@ exports['update'] = {
         t.equal(h.vmapiReqs().length, d.vmapiIdx + 2,
             '1 new request made to VMAPI');
 
-        t.deepEqual(h.vmapiReqs()[d.vmapiIdx + 1].params, {
-            query: h.vmapiQuery([
-                fmt(h.fmt.vm, d.vms[6].uuid),
-                h.str.state,
-                fmt(h.fmt.owner_uuid, owners[1]),
-                h.str.server
-                ])
-            }, 'VMAPI query correct');
+        t.deepEqual(h.lastVmapiReq(), h.vmapiReq({
+            owner_uuid: owners[1],
+            vms: [ d.vms[6].uuid ]
+        }), 'VMAPI query correct');
 
         return t.done();
     },
@@ -318,13 +308,9 @@ exports['update'] = {
         t.equal(h.vmapiReqs().length, d.vmapiIdx + 3,
             '1 new request made to VMAPI');
 
-        t.deepEqual(h.vmapiReqs()[d.vmapiIdx + 2].params, {
-            query: h.vmapiQuery([
-                fmt(h.fmt.owner_uuid, owners[1]),
-                h.str.server,
-                h.str.state
-                ])
-            }, 'VMAPI query correct');
+        t.deepEqual(h.lastVmapiReq(), h.vmapiReq({
+            owner_uuid: owners[1]
+        }), 'VMAPI query correct');
 
         return t.done();
     }
