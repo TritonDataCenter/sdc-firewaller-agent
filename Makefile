@@ -29,6 +29,7 @@ SDC_CLIENTS		 = node_modules/sdc-clients
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_VERSION=v0.10.26
 	NODE_PREBUILT_TAG=gz
+	NODE_PREBUILT_IMAGE=fd2cc906-8938-11e3-beab-4359c665ac99
 endif
 
 include ./tools/mk/Makefile.defs
@@ -42,6 +43,7 @@ include ./tools/mk/Makefile.smf.defs
 
 NAME		:= firewaller
 RELEASE_TARBALL := $(NAME)-$(STAMP).tgz
+RELEASE_MANIFEST := $(NAME)-$(STAMP).manifest
 RELSTAGEDIR          := /tmp/$(STAMP)
 DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 
@@ -91,6 +93,16 @@ release: all docs $(SMF_MANIFESTS)
 	# Cleanup dev / unused bits
 	rm -rf $(DSTDIR)/node_modules/nodeunit
 	(cd $(RELSTAGEDIR) && $(TAR) -zcf $(TOP)/$(RELEASE_TARBALL) *)
+	cat $(TOP)/manifest.tmpl | sed \
+		-e "s/UUID/$$(uuid -v4)/" \
+		-e "s/NAME/$$(json name < $(TOP)/package.json)/" \
+		-e "s/VERSION/$$(json version < $(TOP)/package.json)/" \
+		-e "s/DESCRIPTION/$$(json description < $(TOP)/package.json)/" \
+		-e "s/BUILDSTAMP/$(STAMP)/" \
+		-e "s/SIZE/$$(stat --printf="%s" $(TOP)/$(RELEASE_TARBALL))/" \
+		-e "s/SHA/$$(openssl sha1 $(TOP)/$(RELEASE_TARBALL) \
+		    | cut -d ' ' -f2)/" \
+		> $(TOP)/$(RELEASE_MANIFEST)
 	@rm -rf $(RELSTAGEDIR)
 
 .PHONY: publish
@@ -101,6 +113,7 @@ publish: release
 	fi
 	mkdir -p $(BITS_DIR)/$(NAME)
 	cp $(TOP)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
+	cp $(TOP)/$(RELEASE_MANIFEST) $(BITS_DIR)/$(NAME)/$(RELEASE_MANIFEST)
 
 
 include ./tools/mk/Makefile.deps
