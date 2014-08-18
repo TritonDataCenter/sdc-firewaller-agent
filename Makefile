@@ -89,12 +89,13 @@ release: all docs $(SMF_MANIFESTS)
     $(TOP)/sbin \
     $(TOP)/smf \
     $(DSTDIR)
+	uuid -v4 > $(DSTDIR)/image_uuid
 	cp -PR $(NODE_INSTALL) $(DSTDIR)/node
 	# Cleanup dev / unused bits
 	rm -rf $(DSTDIR)/node_modules/nodeunit
 	(cd $(RELSTAGEDIR) && $(TAR) -zcf $(TOP)/$(RELEASE_TARBALL) *)
 	cat $(TOP)/manifest.tmpl | sed \
-		-e "s/UUID/$$(uuid -v4)/" \
+		-e "s/UUID/$$(cat $(DSTDIR)/image_uuid)/" \
 		-e "s/NAME/$$(json name < $(TOP)/package.json)/" \
 		-e "s/VERSION/$$(json version < $(TOP)/package.json)/" \
 		-e "s/DESCRIPTION/$$(json description < $(TOP)/package.json)/" \
