@@ -7,6 +7,8 @@
 var assert = require('assert-plus');
 var bunyan = require('bunyan');
 var clone = require('clone');
+var createRemoteVM =
+    require('../../node_modules/fw/lib/util/vm').createRemoteVM;
 var fwMocks = require('../../node_modules/fw/test/lib/mocks');
 var ldapjs = require('ldapjs');
 var mod_log = require('../lib/log');
@@ -21,7 +23,6 @@ var util = require('util');
 
 var FWAPI_REQS = {};
 var FWAPI_RULES = {};
-var LOCAL_RVMS = {};
 var LOCAL_SERVER = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 var LOG = mod_log.child({ component: 'mock' });
 var FW_LOG = LOG.child({ component: 'fw' });
@@ -34,14 +35,6 @@ var RESOLVE = [];
 
 // --- Internal helpers
 
-
-
-function localVMs() {
-    return values(VMS).filter(function (vm) {
-        return (vm.hasOwnProperty('server_uuid') &&
-            vm.server_uuid == LOCAL_SERVER);
-    });
-}
 
 
 function uuidSort(a, b) {
@@ -98,6 +91,8 @@ function createWriteStream() {
 
 
 // --- restify
+
+
 
 function mockRestify() {
     this.url = 'http://localhost:8080';
@@ -261,11 +256,23 @@ function getFWAPIrequests() {
     return clone(FWAPI_REQS);
 }
 
+
 /**
  * Get the list of requests made to the mock VMAPI
  */
 function getVMAPIrequests() {
     return clone(VMAPI_REQS);
+}
+
+
+/**
+ * Get the list of VMs on the local server
+ */
+function localVMs() {
+    return clone(values(VMS).filter(function (vm) {
+        return (vm.hasOwnProperty('server_uuid') &&
+            vm.server_uuid == LOCAL_SERVER);
+    }));
 }
 
 
@@ -278,8 +285,9 @@ function getVMAPIrequests() {
  *   the mock FWAPI's /resolve endpoint
  */
 function setMockData(data) {
+    var fsData = fwMocks.values.fs;
+
     FWAPI_RULES = {};
-    LOCAL_RVMS = {};
     RESOLVE = [];
     VMS = {};
 
@@ -291,6 +299,33 @@ function setMockData(data) {
     if (data.fwapiRules) {
         data.fwapiRules.forEach(function (r) {
             FWAPI_RULES[r.uuid] = clone(r);
+        });
+    }
+
+    if (data.localRules) {
+        var fwDir = '/var/fw/rules';
+        if (!fsData.hasOwnProperty(fwDir)) {
+            fsData[fwDir] = {};
+        }
+
+        data.localRules.forEach(function (r) {
+            assert.object(r, 'rule');
+            assert.string(r.uuid, 'rule.uuid');
+            fsData[fwDir][r.uuid + '.json'] = JSON.stringify(r, null, 2);
+        });
+    }
+
+    if (data.localRVMs) {
+        var rvmDir = '/var/fw/vms';
+        if (!fsData.hasOwnProperty(rvmDir)) {
+            fsData[rvmDir] = {};
+        }
+
+        data.localRVMs.forEach(function (v) {
+            assert.object(v, 'rvm');
+            assert.string(v.uuid, 'rvm.uuid');
+            fsData[rvmDir][v.uuid + '.json'] = JSON.stringify(
+                createRemoteVM(v), null, 2);
         });
     }
 
@@ -340,13 +375,17 @@ module.exports = {
 
     // -- mock data getters / setters,  other non-mock stuff
     _addVM: addVM,
+    _fwapiReqs: getFWAPIrequests,
+    get _fwapiRules() {
+        return FWAPI_RULES;
+    },
+    _localVMs: localVMs,
     _uuidSort: uuidSort,
     _setMockData: setMockData,
+    _vmapiReqs: getVMAPIrequests,
 
     // mocks that add to those in fwMocks, so we don't register them
     // directly
     _execFileVmadm: execFileVmadm,
-    _createWriteStream: createWriteStream,
-    _fwapiReqs: getFWAPIrequests,
-    _vmapiReqs: getVMAPIrequests
+    _createWriteStream: createWriteStream
 };

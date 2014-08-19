@@ -5,6 +5,7 @@
  */
 
 var h = require('../unit/helpers');
+var mocks = require('../unit/mocks');
 
 
 /**
@@ -24,6 +25,20 @@ function add(t, rule, callback) {
 
 
 /**
+ * Confirms the list of FWAPI rules is equal to the given list
+ */
+function fwapiEquals(t, exp, desc) {
+    var rules = [];
+    var fwapiRules = mocks._fwapiRules;
+    for (var r in fwapiRules) {
+        rules.push(fwapiRules[r]);
+    }
+
+    h.equalSorted(t, rules, exp, desc);
+}
+
+
+/**
  * Confirms the local list of rules is equal to the given list
  */
 function localEquals(t, exp, desc) {
@@ -34,5 +49,6 @@ function localEquals(t, exp, desc) {
 
 module.exports = {
     add: add,
+    fwapiEquals: fwapiEquals,
     localEquals: localEquals
 };

@@ -17,5 +17,6 @@
         "maxTimeout": 6000,
         "minTimeout": 100,
         "retries": "Infinity"
-    }
+    },
+    "syncInterval": 30
 }

@@ -270,6 +270,15 @@ function generateRule(override) {
 
 
 /**
+ * Generate a recognizable UUID based on the given number
+ */
+function generateUUID(num) {
+    assert.number(num, 'number');
+    return '00000000-0000-0000-0000-00000000000' + num.toString();
+}
+
+
+/**
  * Generate a vmadm-like rule (that has all of the fields we care about,
  * omitting everything else).
  */
@@ -435,6 +444,7 @@ module.exports = {
     send: sendMessage,
     set: mocks._setMockData,
     teardown: teardown,
+    uuid: generateUUID,
     uuidSort: uuidSort,
     vm: generateVM,
     vmapiQuery: vmapiQuery,
