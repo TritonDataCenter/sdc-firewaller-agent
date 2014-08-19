@@ -226,6 +226,19 @@ exports['update firewall_enabled'] = {
 };
 
 
+exports['vmadm list error'] = function (t) {
+    var errMsg = 'ENOENT: something';
+    mod_vm.setListError(new Error(errMsg));
+    mod_vm.update(t, h.vm(), function (err) {
+        t.ok(err, 'error returned');
+        if (err) {
+            t.equal(err.message, errMsg, 'error message');
+        }
+
+        return t.done();
+    });
+};
+
 
 // --- Teardown
 

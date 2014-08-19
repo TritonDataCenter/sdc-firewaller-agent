@@ -400,12 +400,12 @@ function sendMessage(name, value, callback) {
     };
 
     var timeout;
-    var done = once(function _afterMsg(msg) {
+    var done = once(function _afterMsg(err, msg) {
         if (timeout) {
             clearTimeout(timeout);
         }
 
-        return callback(msg);
+        return callback(err, msg);
     });
 
     AGENT.once('task-complete', done);

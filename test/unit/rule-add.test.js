@@ -184,6 +184,25 @@ exports['multiple tags'] = {
 };
 
 
+exports['vmadm list error'] = function (t) {
+    var errMsg = 'ENOENT: something';
+    mod_vm.setListError(new Error(errMsg));
+    var rule = h.rule({
+        owner_uuid: owners[0],
+        rule: 'FROM any TO all vms ALLOW udp PORT 5432'
+    });
+
+    mod_rule.add(t, rule, function (err) {
+        t.ok(err, 'error returned');
+        if (err) {
+            t.equal(err.message, errMsg, 'error message');
+        }
+
+        return t.done();
+    });
+};
+
+
 
 // --- Teardown
 

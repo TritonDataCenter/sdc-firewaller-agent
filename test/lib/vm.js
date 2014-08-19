@@ -16,9 +16,28 @@ var mocks = require('../unit/mocks');
 /**
  * Adds a VM, confirms it was received, and ends the test.
  */
-function add(t, vm) {
-    h.send('vm.add', vm, function (msg) {
+function add(t, vm, callback) {
+    h.send('vm.add', vm, function (err, msg) {
         t.ok(msg, 'message received');
+        if (callback) {
+            return callback(err, msg);
+        }
+
+        return t.done();
+    });
+}
+
+
+/**
+ * Adds a VM, confirms it was received, and ends the test.
+ */
+function del(t, vm, callback) {
+    h.send('vm.delete', vm, function (err, msg) {
+        t.ok(msg, 'message received');
+        if (callback) {
+            return callback(err, msg);
+        }
+
         return t.done();
     });
 }
@@ -35,9 +54,13 @@ function localEquals(t, exp, desc) {
 /**
  * Updates a VM, confirms it was received, and ends the test.
  */
-function update(t, vm) {
-    h.send('vm.update', vm, function (msg) {
+function update(t, vm, callback) {
+    h.send('vm.update', vm, function (err, msg) {
         t.ok(msg, 'message received');
+        if (callback) {
+            return callback(err, msg);
+        }
+
         return t.done();
     });
 }
@@ -46,6 +69,8 @@ function update(t, vm) {
 
 module.exports = {
     add: add,
+    del: del,
     localEquals: localEquals,
-    update: update
+    update: update,
+    setListError: mocks._setVmadmListError
 };

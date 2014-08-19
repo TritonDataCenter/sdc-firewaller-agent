@@ -27,6 +27,7 @@ var LOCAL_SERVER = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 var LOG = mod_log.child({ component: 'mock' });
 var FW_LOG = LOG.child({ component: 'fw' });
 var VM_LOG = LOG.child({ component: 'vmadm' });
+var VMADM_ERRORS = [];
 var VMAPI_REQS = [];
 var VMS = {};
 var RESOLVE = [];
@@ -72,6 +73,10 @@ function execFileVmadm(cmd, args, callback) {
     assert.equal(cmd, '/usr/sbin/vmadm');
     assert.arrayOfString(args, 'args');
     assert.equal(args[0], 'lookup');
+
+    if (VMADM_ERRORS.length !== 0) {
+        return callback(VMADM_ERRORS.shift());
+    }
 
     var vms = localVMs();
     VM_LOG.debug({ vms: vms }, 'vmadm: returning vms');
@@ -343,6 +348,15 @@ function setMockData(data) {
 }
 
 
+/**
+ * Set the error(s) returned by `vmadm list` calls
+ */
+function setVmadmListError(err) {
+    VMADM_ERRORS = util.isArray(err) ? err : [ err ];
+}
+
+
+
 module.exports = {
     // -- mocks
 
@@ -382,6 +396,7 @@ module.exports = {
     _localVMs: localVMs,
     _uuidSort: uuidSort,
     _setMockData: setMockData,
+    _setVmadmListError: setVmadmListError,
     _vmapiReqs: getVMAPIrequests,
 
     // mocks that add to those in fwMocks, so we don't register them

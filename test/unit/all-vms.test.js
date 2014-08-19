@@ -6,6 +6,8 @@
 
 var fmt = require('util').format;
 var h = require('./helpers');
+var mod_rule = require('../lib/rule');
+var mod_rvm = require('../lib/rvm');
 var mod_uuid = require('node-uuid');
 var util = require('util');
 
@@ -75,19 +77,16 @@ exports['add'] = {
     },
 
     'add: rule 0': function (t) {
-        h.send('fw.add_rule', d.rules[0], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.add(t, d.rules[0]);
     },
 
     'results: rule 0': function (t) {
-        h.equalSorted(t, h.localRules(), d.rules, 'rule added');
+        mod_rule.localEquals(t, d.rules, 'rule added');
 
         // The rule is from all vms to a local VM, so it should have
         // fetched all other VMs for this owner from VMAPI
         d.rvms = d.rvms.concat(h.vmToRVM([ d.vms[3], d.vms[4] ]));
-        h.equalSorted(t, h.localRVMs(), d.rvms, 'remote VMs added');
+        mod_rvm.localEquals(t, d.rvms, 'remote VMs added');
 
         d.cache[owners[0]] = {
             allVMs: true,
@@ -121,20 +120,15 @@ exports['add'] = {
             vms: d.vms
         });
 
-        h.send('fw.add_rule', d.rules[1], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.add(t, d.rules[1]);
     },
 
     'results: rule 1': function (t) {
-        h.equalSorted(t, h.localRules(), [
-            d.rules[0], d.rules[1] ],
-            'rule 1 added');
+        mod_rule.localEquals(t, [ d.rules[0], d.rules[1] ], 'rule added');
 
         // The rule is from all vms to a local VM, so it should have
         // fetched all other VMs for this owner from VMAPI
-        h.equalSorted(t, h.localRVMs(), d.rvms, 'remote VMs still present');
+        mod_rvm.localEquals(t, d.rvms, 'remote VMs still present');
 
         t.deepEqual(agent.cache.cache, d.cache, 'cache unchanged');
         t.equal(h.vmapiReqs().length, 1, 'no new requests made to VMAPI');
@@ -158,18 +152,15 @@ exports['add'] = {
             vms: d.vms
         });
 
-        h.send('fw.add_rule', d.rules[2], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.add(t, d.rules[2]);
     },
 
     'results: rule 2': function (t) {
-        h.equalSorted(t, h.localRules(), d.rules, 'rule 2 added');
+        mod_rule.localEquals(t, d.rules, 'rule 2 added');
 
         // The rule is from all vms to a local VM, so it should have
         // fetched all other VMs for this owner from VMAPI
-        h.equalSorted(t, h.localRVMs(), d.rvms, 'remote VMs still present');
+        mod_rvm.localEquals(t, d.rvms, 'remote VMs still present');
         t.deepEqual(agent.cache.cache, d.cache, 'cache unchanged');
         t.equal(h.vmapiReqs().length, 1, 'no new requests made to VMAPI');
 
@@ -200,19 +191,16 @@ exports['update'] = {
 
     // First, add the rule
     'add: rule 3': function (t) {
-        h.send('fw.add_rule', d.rules[d.idx], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.add(t, d.rules[d.idx]);
     },
 
     'after adding rule 3': function (t) {
-        h.equalSorted(t, h.localRules(), d.rules, 'rule added');
+        mod_rule.localEquals(t, d.rules, 'rule added');
 
         // The rule is from all vms to a local VM, so it should have
         // fetched all other VMs for this owner from VMAPI
         d.rvms.push(h.vmToRVM(d.vms[5]));
-        h.equalSorted(t, h.localRVMs(), d.rvms, 'VM 5 added');
+        mod_rvm.localEquals(t, d.rvms, 'VM 5 added');
 
         d.cache[owners[1]] = {
             allVMs: false,
@@ -247,19 +235,16 @@ exports['update'] = {
             'FROM (tag foo = bar OR vm %s) TO vm %s ALLOW tcp PORT all',
                 d.vms[6].uuid, d.vms[2].uuid);
 
-        h.send('fw.update_rule', d.rules[d.idx], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.update(t, d.rules[d.idx]);
     },
 
     'after update 1': function (t) {
-        h.equalSorted(t, h.localRules(), d.rules, 'rule updated');
+        mod_rule.localEquals(t, d.rules, 'rule updated');
 
         // The rule is from all vms to a local VM, so it should have
         // fetched all other VMs for this owner from VMAPI
         d.rvms.push(h.vmToRVM(d.vms[6]));
-        h.equalSorted(t, h.localRVMs(), d.rvms, 'VM 6 added');
+        mod_rvm.localEquals(t, d.rvms, 'VM 6 added');
 
         // tags and vms should be empty: they are now covered by allVMs
         d.cache[owners[1]].vms[d.vms[6].uuid] = 1;
@@ -283,19 +268,16 @@ exports['update'] = {
                 'FROM all vms TO vm %s ALLOW tcp PORT all',
                 d.vms[2].uuid);
 
-        h.send('fw.update_rule', d.rules[d.idx], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.update(t, d.rules[d.idx]);
     },
 
     'after update 2': function (t) {
-        h.equalSorted(t, h.localRules(), d.rules, 'rule updated');
+        mod_rule.localEquals(t, d.rules, 'rule updated');
 
         // The rule is from all vms to a local VM, so it should have
         // fetched all other VMs for this owner from VMAPI
         d.rvms.push(h.vmToRVM(d.vms[7]));
-        h.equalSorted(t, h.localRVMs(), d.rvms, 'VM 7 added');
+        mod_rvm.localEquals(t, d.rvms, 'VM 7 added');
 
         // tags and vms should be empty: they are now covered by allVMs
         d.cache[owners[1]] = {
@@ -339,14 +321,11 @@ exports['add global rule'] = {
 
     // First, add the rule
     'add: rule 4': function (t) {
-        h.send('fw.add_rule', d.rules[d.idx], function (msg) {
-            t.ok(msg, 'message received');
-            return t.done();
-        });
+        mod_rule.update(t, d.rules[d.idx]);
     },
 
     'after rule 4 add': function (t) {
-        h.equalSorted(t, h.localRules(), d.rules, 'rule added');
+        mod_rule.localEquals(t, d.rules, 'rule added');
 
         // The cache should not have changed, and we should not have hit
         // VMAPI.
