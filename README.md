@@ -78,4 +78,4 @@ To run the integration tests, on a **non-production** SDC server:
     sdc-login fwapi
     /opt/smartdc/fwapi/test/runtests
 
-For more information, consult the [Firewall API README](https://github.com/joyent/sdc-fwapi/README.md).
+For more information, consult the [Firewall API README](https://github.com/joyent/sdc-fwapi/blob/master/README.md)
