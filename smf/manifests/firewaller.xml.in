@@ -27,7 +27,7 @@
 <exec_method
   type="method"
   name="start"
-  exec="@@PREFIX@@/lib/node_modules/firewaller/node/sbin/firewaller"
+  exec="@@PREFIX@@/lib/node_modules/firewaller/sbin/firewaller"
   timeout_seconds="60">
   <method_context>
     <method_credential user="root" group="staff"/>

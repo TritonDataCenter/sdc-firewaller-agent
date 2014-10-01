@@ -94,6 +94,7 @@ release: all docs $(SMF_MANIFESTS)
 	(git symbolic-ref HEAD | awk -F/ '{print $$3}' && git describe) > $(DSTDIR)/describe
 	cp -r \
     $(TOP)/config.json \
+    $(TOP)/main.js \
     $(TOP)/lib \
     $(TOP)/node_modules \
     $(TOP)/npm \
