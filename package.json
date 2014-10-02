@@ -1,7 +1,7 @@
 {
     "name": "firewaller",
     "description": "SmartDataCenter Firewalling Agent",
-    "version": "1.2.6",
+    "version": "1.2.7",
     "author": "Joyent (joyent.com)",
     "private": true,
     "dependencies": {
