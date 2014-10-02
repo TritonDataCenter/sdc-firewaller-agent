@@ -22,7 +22,7 @@ TOP=$(unset CDPATH; cd $(dirname $0)/../; pwd)
 
 # Add firewaller log rotation
 /usr/sbin/logadm -w firewaller_logs -C 168 -S 1g -c -p 1h \
-    -t '/var/log/sdc/upload/firewaller_\$nodename_%FT%H:%M:%S.log' \
+    -t '/var/log/sdc/upload/firewaller_$nodename_%FT%H:%M:%S.log' \
     '/var/svc/log/*firewaller*.log'
 
 # Make sure firewaller logs get rotated before the SMF log rotation takes over
