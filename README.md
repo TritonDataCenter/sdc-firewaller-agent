@@ -8,22 +8,24 @@
     Copyright (c) 2014, Joyent, Inc.
 -->
 
-# sdc-firewaller-agent
+# SDC Firewaller Agent
 
-This repository is part of the Joyent SmartDataCenter project (SDC).  For
-contribution guidelines, issues, and general documentation, visit the main
-[SDC](http://github.com/joyent/sdc) project page.
+This repository is part of the SmartDataCenter (SDC) project. For
+contribution guidelines, issues, and general documentation, visit the
+[main SDC project](http://github.com/joyent/sdc).
 
-Firewaller is the SDC compute node agent responsible for syncing firewall
-rules and associated VM data from FWAPI and VMAPI. For more information on
+## Overview
+
+Firewaller is the SmartDataCenter (SDC) compute node agent responsible for
+syncing firewall rules and associated VM data from firewall API (FWAPI) and
+virtual machine API (VMAPI). For more information on
 how it interacts with the rest of SmartDataCenter, consult the
-[Firewall API architecture document](https://github.com/joyent/sdc-fwapi/blob/master/docs/architecture.restdown).
+[Firewall API architecture document](https://github.com/joyent/sdc-fwapi/blob/master/docs/architecture.md).
 
 
-# Repository
+## Code Layout
 
-    config.json         agent configuration file
-    deps/               Git submodules for running 'make check'
+    deps/               code from other projects including SmartOS fwadm
     lib/                source files
     node_modules/       node.js deps (not checked in - installed via
                         `npm install`)
@@ -32,9 +34,10 @@ how it interacts with the rest of SmartDataCenter, consult the
     smf/manifests       SMF manifests
     test/unit           Unit tests (nodeunit)
     tools/              dev tools from eng.git
+    config.json         agent configuration file
 
 
-# Development
+## Development
 
 To get started:
 
@@ -50,14 +53,14 @@ To run all checks and tests:
 
     make prepush
 
-Before commiting/pushing run `make prepush` and, if possible, get a code
+Before pushing run `make prepush` and, if possible, get a code
 review. For non-trivial changes, a unit or integration test that covers the
-new behaviour is required.
+new behavior is required.
 
 
-# Testing
+## Testing
 
-## Unit tests
+### Unit Tests
 
 To run all tests:
 
@@ -67,11 +70,11 @@ To run an individual test:
 
     ./test/runtest ./test/unit/testname.test.js
 
-## Integration tests
+### Integration Tests
 
-Since firewaller and the Firewall API are closely related, it is strongly
-encouraged that you run the [Firewall API](https://github.com/joyent/sdc-fwapi)
-integration tests before checking in.
+Since firewaller and the firewall API are closely related, it is strongly
+encouraged that you run the [FWAPI](https://github.com/joyent/sdc-fwapi)
+integration tests before pushing changes.
 
 To run the integration tests, on a **non-production** SDC server:
 
@@ -79,3 +82,10 @@ To run the integration tests, on a **non-production** SDC server:
     /opt/smartdc/fwapi/test/runtests
 
 For more information, consult the [Firewall API README](https://github.com/joyent/sdc-fwapi/blob/master/README.md)
+
+
+## License
+
+SDC Firewaller Agent is licensed under the
+[Mozilla Public License version 2.0](http://mozilla.org/MPL/2.0/).
+See the file LICENSE.
