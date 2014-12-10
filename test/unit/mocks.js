@@ -126,6 +126,9 @@ mockRestify.prototype.listen = function _listen(_, callback) {
     return callback();
 };
 
+mockRestify.prototype.use = function _use() {
+    return;
+};
 
 
 function createRestifyServer() {
@@ -387,7 +390,8 @@ module.exports = {
     },
 
     restify: {
-        createServer: createRestifyServer
+        createServer: createRestifyServer,
+        requestLogger: function () { return; }
     },
 
     'sdc-clients': {
