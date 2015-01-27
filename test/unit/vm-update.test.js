@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
@@ -26,13 +26,13 @@ var util = require('util');
 
 
 var agent;
-var owners = [ mod_uuid.v4() ];
 var d = {
     exp: {
         cache: {},
         rules: [],
         rvms: []
     },
+    owners: [ mod_uuid.v4() ],
     rules: [],
     rvms: [],
     vms: []
@@ -61,14 +61,14 @@ exports['update firewall_enabled'] = {
     'setup': function (t) {
         d.vms = [
             h.vm(),
-            h.vm({ owner_uuid: owners[0] }),
-            h.vm({ owner_uuid: owners[0], tags: { web: true } })
+            h.vm({ owner_uuid: d.owners[0] }),
+            h.vm({ owner_uuid: d.owners[0], tags: { web: true } })
         ];
 
         d.rules = [
             h.rule({
                 created_by: 'fwapi',
-                owner_uuid: owners[0],
+                owner_uuid: d.owners[0],
                 rule:'FROM tag web = true TO tag private = true '
                     + 'ALLOW tcp PORT 22'
             })
@@ -97,7 +97,7 @@ exports['update firewall_enabled'] = {
         d.vms.push(h.vm({
             firewall_enabled: false,
             local: true,
-            owner_uuid: owners[0],
+            owner_uuid: d.owners[0],
             tags: { private: true }
         }));
 
@@ -127,7 +127,7 @@ exports['update firewall_enabled'] = {
         h.set({
             resolve: [ {
                 allVMs: false,
-                owner_uuid: owners[0],
+                owner_uuid: d.owners[0],
                 rules: [ d.rules[0] ],
                 tags: {
                     web: 'true'
@@ -148,7 +148,7 @@ exports['update firewall_enabled'] = {
         t.deepEqual(h.localRVMs(), d.exp.rvms, 'remote VM added');
         t.equal(h.vmapiReqs().length, 1, '1 request made to VMAPI');
 
-        mod_cache.addTag(d.exp.cache, owners[0], 'web', 'true');
+        mod_cache.addTag(d.exp.cache, d.owners[0], 'web', 'true');
         t.deepEqual(agent.cache.cache, d.exp.cache,
             'tag web=true added to cache');
 
@@ -160,7 +160,7 @@ exports['update firewall_enabled'] = {
         d.vms.push(h.vm({
             firewall_enabled: false,
             local: true,
-            owner_uuid: owners[0]
+            owner_uuid: d.owners[0]
         }));
 
         h.set({
@@ -183,7 +183,7 @@ exports['update firewall_enabled'] = {
         // d.rules[1]
         d.rules.push(h.rule({
             created_by: 'fwapi',
-            owner_uuid: owners[0],
+            owner_uuid: d.owners[0],
             rule: util.format('FROM any TO vm %s ALLOW tcp PORT 8080',
                 d.vms[4].uuid)
         }));
@@ -211,7 +211,7 @@ exports['update firewall_enabled'] = {
         h.set({
             resolve: [ {
                 allVMs: false,
-                owner_uuid: owners[0],
+                owner_uuid: d.owners[0],
                 rules: [ d.rules[1] ],
                 tags: {},
                 vms: []
@@ -246,6 +246,96 @@ exports['vmadm list error'] = function (t) {
         return t.done();
     });
 };
+
+
+exports['update so rules no longer affect VM'] = {
+    'create rule': function (t) {
+        // Add a local VM
+        d.vms = [
+            h.vm({ owner_uuid: d.owners[0], local: true,
+                tags: { dev: 'proj1' }
+            })
+        ];
+
+        // And a rule that targets that VM's tag
+        d.rules = [
+            h.rule({
+                created_by: 'fwapi',
+                enabled: true,
+                owner_uuid: d.owners[0],
+                rule: 'FROM any TO tag dev = proj1 ALLOW tcp PORT 22'
+            })
+        ];
+
+        h.reset();
+        h.set({
+            fwapiRules: d.rules,
+            vms: d.vms
+        });
+
+        mod_rule.add(t, d.rules[0], function (err, msg) {
+            t.ifError(err, 'add rule');
+            if (err) {
+                return t.done();
+            }
+
+            mod_rule.localEquals(t, d.rules, 'rule added');
+            mod_vm.ipfRule(t, {
+                direction: 'in',
+                port: 22,
+                proto: 'tcp',
+                target: 'any',
+                vm: d.vms[0]
+            });
+
+            return t.done();
+        });
+    },
+
+    // Now update the VM so that it has a different tag - this should
+    // un-apply the rule to that VM, even though the rule is still on the CN
+    'update VM': function (t) {
+        d.vms[0].tags = {
+            dev: 'proj2'
+        };
+
+        // Make the VM change take effect in the mocks:
+        h.set({
+            fwapiRules: d.rules,
+            resolve: [ {
+                allVMs: false,
+                owner_uuid: d.owners[0],
+                rules: [],
+                tags: {},
+                vms: []
+            } ],
+            vms: d.vms
+        });
+
+        mod_vm.update(t, d.vms[0], function (err) {
+            t.ifError(err, 'update VM');
+            if (err) {
+                return t.done();
+            }
+
+            mod_rule.localEquals(t, d.rules, 'rule unchanged');
+            mod_vm.ipfRule(t, {
+                direction: 'in',
+                port: 22,
+                proto: 'tcp',
+                target: 'any',
+                vm: d.vms[0]
+                // XXX: this is wrong - the VM's ipf rules should be
+                // rewritten. Uncomment the next line once FWAPI-200
+                // is fixed:
+                // doesNotExist: true
+            });
+
+            return t.done();
+        });
+    }
+};
+
 
 
 // --- Teardown

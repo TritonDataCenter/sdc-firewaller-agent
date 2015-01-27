@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
@@ -35,6 +35,8 @@ var LOCAL_SERVER = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 var LOG = mod_log.child({ component: 'mock' });
 var FW_LOG = LOG.child({ component: 'fw' });
 var VM_LOG = LOG.child({ component: 'vmadm' });
+var RULES_DIR = '/var/fw/rules';
+var RVMS_DIR = '/var/fw/vms';
 var VMADM_ERRORS = [];
 var VMAPI_REQS = [];
 var VMS = {};
@@ -319,28 +321,26 @@ function setMockData(data) {
     }
 
     if (data.localRules) {
-        var fwDir = '/var/fw/rules';
-        if (!fsData.hasOwnProperty(fwDir)) {
-            fsData[fwDir] = {};
+        if (!fsData.hasOwnProperty(RULES_DIR)) {
+            fsData[RULES_DIR] = {};
         }
 
         data.localRules.forEach(function (r) {
             assert.object(r, 'rule');
             assert.string(r.uuid, 'rule.uuid');
-            fsData[fwDir][r.uuid + '.json'] = JSON.stringify(r, null, 2);
+            fsData[RULES_DIR][r.uuid + '.json'] = JSON.stringify(r, null, 2);
         });
     }
 
     if (data.localRVMs) {
-        var rvmDir = '/var/fw/vms';
-        if (!fsData.hasOwnProperty(rvmDir)) {
-            fsData[rvmDir] = {};
+        if (!fsData.hasOwnProperty(RVMS_DIR)) {
+            fsData[RVMS_DIR] = {};
         }
 
         data.localRVMs.forEach(function (v) {
             assert.object(v, 'rvm');
             assert.string(v.uuid, 'rvm.uuid');
-            fsData[rvmDir][v.uuid + '.json'] = JSON.stringify(
+            fsData[RVMS_DIR][v.uuid + '.json'] = JSON.stringify(
                 createRemoteVM(v), null, 2);
         });
     }

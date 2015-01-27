@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
@@ -25,6 +25,11 @@ var util = require('util');
 
 
 var agent;
+var d = {
+    owners: [ mod_uuid.v4() ],
+    rules: [],
+    vms: []
+};
 
 
 
@@ -61,6 +66,75 @@ exports['vmadm list error'] = function (t) {
 
         return t.done();
     });
+};
+
+
+exports['update to not affect local VMs'] = {
+    'create rule': function (t) {
+        // Add a local VM
+        d.vms = [
+            h.vm({ owner_uuid: d.owners[0], local: true,
+                tags: { dev: 'proj1' }
+            })
+        ];
+
+        // And a rule that targets that VM's tag
+        d.rules = [
+            h.rule({
+                created_by: 'fwapi',
+                enabled: true,
+                owner_uuid: d.owners[0],
+                rule: 'FROM any TO tag dev = proj1 ALLOW tcp PORT 22'
+            })
+        ];
+
+        h.set({
+            fwapiRules: d.rules,
+            vms: d.vms
+        });
+
+        mod_rule.add(t, d.rules[0], function (err, msg) {
+            t.ifError(err, 'add rule');
+            if (err) {
+                return t.done();
+            }
+
+            mod_rule.localEquals(t, d.rules, 'rule added');
+            mod_vm.ipfRule(t, {
+                direction: 'in',
+                port: 22,
+                proto: 'tcp',
+                target: 'any',
+                vm: d.vms[0]
+            });
+            return t.done();
+        });
+    },
+
+    // Now update the rule so that it targets a different tag - this should
+    // still update the rule on the CN, even though it no longer targets the
+    // VM that it used to apply to
+    'update rule': function (t) {
+        d.rules[0].rule = 'FROM any TO tag dev = proj2 ALLOW tcp PORT 22';
+
+        mod_rule.update(t, d.rules[0], function (err) {
+            t.ifError(err, 'update rule');
+            if (err) {
+                return t.done();
+            }
+
+            mod_rule.localEquals(t, d.rules, 'rule updated');
+            mod_vm.ipfRule(t, {
+                direction: 'in',
+                doesNotExist: true,
+                port: 22,
+                proto: 'tcp',
+                target: 'any',
+                vm: d.vms[0]
+            });
+            return t.done();
+        });
+    }
 };
 
 
