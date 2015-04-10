@@ -5,15 +5,18 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
  * rule helpers
  */
 
+var assert = require('assert-plus');
+var clone = require('clone');
 var h = require('../unit/helpers');
 var mocks = require('../unit/mocks');
+var restify = require('restify');
 
 
 
@@ -24,7 +27,7 @@ var mocks = require('../unit/mocks');
 /**
  * Sends an add_rule rule message, confirms it was received, and ends the test.
  */
-function add(t, rule, callback) {
+function addRule(t, rule, callback) {
     h.send('fw.add_rule', rule, function (err, msg) {
         t.ok(msg, 'message received');
 
@@ -38,9 +41,51 @@ function add(t, rule, callback) {
 
 
 /**
+ * Updates a rule via the REST API
+ */
+function apiUpdateRule(t, opts, callback) {
+    assert.object(t, 't');
+    assert.object(opts, 'opts');
+    assert.object(opts.rule, 'opts.rule');
+
+    var client = h.getClient();
+    var putOpts = { path: '/rules/' + opts.rule.uuid };
+
+    client.put(putOpts, opts.rule, function _afterUpdate(err, req, res, obj) {
+        // XXX: allow opts.expErr
+        t.ifError(err, 'update rule');
+
+        if (err) {
+            if (callback) {
+                return callback(err);
+            }
+
+            return t.done();
+        }
+
+        if (opts.fillInMissing) {
+            [ 'created_by', 'version' ].forEach(function (f) {
+                if (!opts.rule.hasOwnProperty(f)) {
+                    opts.rule[f] = obj[f];
+                }
+            });
+        }
+
+        t.deepEqual(obj, opts.rule, 'result');
+
+        if (callback) {
+            return callback(err, obj);
+        }
+
+        return t.done();
+    });
+}
+
+
+/**
  * Sends a del_rule message, confirms it was received, and ends the test.
  */
-function del(t, rule, callback) {
+function delRule(t, rule, callback) {
     h.send('fw.del_rule', rule, function (err, msg) {
         t.ok(msg, 'message received');
 
@@ -78,7 +123,7 @@ function localEquals(t, exp, desc) {
 /**
  * Sends an update_rule message, confirms it was received, and ends the test.
  */
-function update(t, rule, callback) {
+function updateRule(t, rule, callback) {
     h.send('fw.update_rule', rule, function (err, msg) {
         t.ok(msg, 'message received');
 
@@ -93,9 +138,10 @@ function update(t, rule, callback) {
 
 
 module.exports = {
-    add: add,
-    del: del,
+    add: addRule,
+    apiUpdate: apiUpdateRule,
+    del: delRule,
     fwapiEquals: fwapiEquals,
     localEquals: localEquals,
-    update: update
+    update: updateRule
 };

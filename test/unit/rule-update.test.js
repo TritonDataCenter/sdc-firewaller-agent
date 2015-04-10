@@ -12,6 +12,7 @@
  * update-rule task unit tests
  */
 
+var fmt = require('util').format;
 var h = require('./helpers');
 var mod_rule = require('../lib/rule');
 var mod_uuid = require('node-uuid');
@@ -134,6 +135,51 @@ exports['update to not affect local VMs'] = {
             });
             return t.done();
         });
+    }
+};
+
+
+exports['update via API'] = {
+    'no VMs targeted': function (t) {
+        d.rules = [];
+        d.vms = [];
+
+        h.reset();
+        h.set({
+            fwapiRules: d.rules,
+            vms: d.vms
+        });
+
+        d.rule = {
+            enabled: true,
+            owner_uuid: mod_uuid.v4(),
+            rule: fmt('FROM any TO vm %s ALLOW udp PORT 9090', mod_uuid.v4()),
+            uuid: mod_uuid.v4()
+        };
+
+        mod_rule.apiUpdate(t, {
+            fillInMissing: true,
+            rule: d.rule
+        });
+    },
+
+    'rule exists': function (t) {
+        mod_rule.localEquals(t, [ d.rule ], 'rule added');
+        return t.done();
+    },
+
+    'update': function (t) {
+        d.rule.rule = fmt('FROM any TO vm %s ALLOW udp PORT 9091',
+            mod_uuid.v4());
+
+        mod_rule.apiUpdate(t, {
+            rule: d.rule
+        });
+    },
+
+    'rule updated': function (t) {
+        mod_rule.localEquals(t, [ d.rule ], 'rule updated');
+        return t.done();
     }
 };
 

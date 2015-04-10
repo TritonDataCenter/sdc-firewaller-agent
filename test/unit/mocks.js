@@ -79,7 +79,7 @@ function values(obj, sort) {
 
 
 
-function execFileVmadm(cmd, args, callback) {
+function execFileVmadm(cmd, args, opts, callback) {
     assert.equal(cmd, '/usr/sbin/vmadm');
     assert.arrayOfString(args, 'args');
     assert.equal(args[0], 'lookup');
@@ -101,40 +101,6 @@ function execFileVmadm(cmd, args, callback) {
 
 function createWriteStream() {
     return process.stderr;
-}
-
-
-
-// --- restify
-
-
-
-function mockRestify() {
-    this.url = 'http://localhost:8080';
-}
-
-
-mockRestify.prototype.close = function _close() {
-    return;
-};
-
-
-mockRestify.prototype.get = function _get() {
-    return;
-};
-
-
-mockRestify.prototype.listen = function _listen(_, callback) {
-    return callback();
-};
-
-mockRestify.prototype.use = function _use() {
-    return;
-};
-
-
-function createRestifyServer() {
-    return new mockRestify();
 }
 
 
@@ -387,11 +353,6 @@ module.exports = {
         stdSerializers: bunyan.stdSerializers,
         resolveLevel: bunyan.resolveLevel,
         RingBuffer: bunyan.RingBuffer
-    },
-
-    restify: {
-        createServer: createRestifyServer,
-        requestLogger: function () { return; }
     },
 
     'sdc-clients': {

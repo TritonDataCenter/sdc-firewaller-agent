@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2014, Joyent, Inc.
+ * Copyright (c) 2015, Joyent, Inc.
  */
 
 /*
@@ -30,6 +30,7 @@ var mod_uuid = require('node-uuid');
 var once = require('once');
 var path = require('path');
 var pred = require('../../lib/pred');
+var restify = require('restify');
 var stream = require('fast-stream');
 var util = require('util');
 var uuidSort = mocks._uuidSort;
@@ -41,6 +42,10 @@ var uuidSort = mocks._uuidSort;
 
 
 var AGENT;
+var CLIENT = restify.createJsonClient({
+    agent: false,
+    url: 'http://localhost:2021'
+});
 var CUR_IP = 1;
 var ID = 1;
 var INITIAL_DATA;
@@ -66,7 +71,7 @@ function initialMockData() {
         INITIAL_DATA = {
             fs: {}
         };
-        INITIAL_DATA.fs[pkgJson] = JSON.stringify({ version: 'unit-test' });
+        INITIAL_DATA.fs[pkgJson] = JSON.stringify({ version: '1.3.0' });
     }
 
     return clone(INITIAL_DATA);
@@ -124,19 +129,48 @@ function setupMocks() {
     }
 
     var allowed = [
+        './',
         './add-rule',
+        './bunyan_helper',
         './cache',
+        './charset.js',
+        './constants',
+        './dictionary',
         './del-rule',
+        './dtrace',
+        './formatters',
+        './encoding.js',
         './endpoints',
+        './errors',
+        './framer',
         './fw',
+        './http_date',
+        './language.js',
+        './mediaType.js',
         './ping',
+        './plugins/cors',
         './pred',
+        './response',
+        './request',
         './rules',
+        './router',
         './rvms',
+        './server',
+        './spdy/client',
+        './spdy/connection',
+        './spdy/protocol',
+        './spdy/response',
+        './spdy/scheduler',
+        './spdy/server',
+        './spdy/stream',
+        './spdy/utils',
+        './spdy/zlib-pool',
         './status',
         './sync',
         './tasks',
         './update-rule',
+        './upgrade',
+        './utils',
         './vm',
         './vmapi',
         './vms',
@@ -145,18 +179,35 @@ function setupMocks() {
         './vm-update',
         '../fw',
         '../fwapi',
+        '../spdy',
         '../vm',
         '../vmapi',
         '../../lib/agent',
+        '../../spdy',
         'async',
         'backoff',
+        'buffer',
+        'crypto',
+        'deep-equal',
+        'domain',
         'fast-stream',
         'fw',
         'fw/lib/util/log',
+        'http',
+        'https',
         'jsprim',
         'json-schema',
+        'lru-cache',
+        'mime',
+        'negotiator',
+        'once',
         'os',
-        'path'
+        'path',
+        'restify',
+        'semver',
+        'spdy',
+        'url',
+        'zlib'
     ];
 
     fwMocks.setup({
@@ -316,6 +367,14 @@ function generateVM(override) {
 
 
 /**
+ * Return the restify client pointed at the local firewaller
+ */
+function getClient() {
+    return CLIENT;
+}
+
+
+/**
  * Returns the last request made to VMAPI
  */
 function lastVmapiReq() {
@@ -434,6 +493,10 @@ function teardown(t) {
         STREAM.close();
     }
 
+    if (CLIENT) {
+        CLIENT.close();
+    }
+
     return t.done();
 }
 
@@ -443,6 +506,7 @@ module.exports = {
     createAgent: createAgent,
     equalSorted: equalSorted,
     fwapiReqs: mocks._fwapiReqs,
+    getClient: getClient,
     lastVmapiReq: lastVmapiReq,
     localRules: localRules,
     localRVMs: localRVMs,
