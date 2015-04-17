@@ -123,36 +123,6 @@ function adopt_instance()
     echo "Adopted service ${AGENT} to instance ${instance_uuid}"
 }
 
-function add_config_agent_instance()
-{
-    local instance_uuid
-    instance_uuid=$(cat $ETC_DIR/$AGENT)
-
-    if [[ -z ${instance_uuid} ]]; then
-        instance_uuid=$(uuid -v4)
-        echo $instance_uuid > $ETC_DIR/$AGENT
-    fi
-
-    local config_etc_dir=${ETC_DIR}/config-agent.d
-    mkdir -p $config_etc_dir
-
-    cat >$config_etc_dir/$AGENT.json <<EOL
-{
-    "instance": "${instance_uuid}",
-    "localManifestDirs": ["${ROOT}"]
-}
-EOL
-}
-
-function config_agent_sync()
-{
-    cagent_prefix=$PREFIX/lib/node_modules/config-agent
-    if [[ -d $cagent_prefix ]]; then
-        ${cagent_prefix}/build/node/bin/node $cagent_prefix/agent.js \
-            -s --sapi-url=$SAPI_URL
-    fi
-}
-
 # ---- mainline
 
 import_smf_manifest
@@ -184,11 +154,9 @@ if $sapi_ping; then
     have_sapi="true"
 fi
 
-# case 1) is first time this agent is installed on the headnode. We just need
-# to add the instance to config-agent since headnode.sh takes care of adopting
-# it into SAPI
+# case 1) is first time this agent is installed on the headnode.
+# headnode.sh takes care of adopting it into SAPI
 if [[ $is_headnode == "true" ]] && [[ $have_sapi == "false" ]]; then
-    add_config_agent_instance
     exit 0
 fi
 
@@ -224,8 +192,6 @@ if [[ ${valid_sapi} == "false" ]]; then
     exit 0
 else
     adopt_instance_if_necessary
-    add_config_agent_instance
-    config_agent_sync
 fi
 
 exit 0
