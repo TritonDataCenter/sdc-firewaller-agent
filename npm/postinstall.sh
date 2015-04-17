@@ -57,7 +57,8 @@ function import_smf_manifest()
 function instance_exists()
 {
     local instance_uuid=$1
-    local sapi_instance=$(curl ${SAPI_URL}/instances/${instance_uuid} | json -H uuid)
+    local sapi_instance
+    sapi_instance=$(curl ${SAPI_URL}/instances/${instance_uuid} | json -H uuid)
 
     if [[ -n ${sapi_instance} ]]; then
         return 0
@@ -68,7 +69,8 @@ function instance_exists()
 
 function adopt_instance_if_necessary()
 {
-    local instance_uuid=$(cat $ETC_DIR/$AGENT)
+    local instance_uuid
+    instance_uuid=$(cat $ETC_DIR/$AGENT)
 
     # verify it exists on sapi if there is an instance uuid written to disk
     if [[ -n ${instance_uuid} ]]; then
@@ -105,22 +107,26 @@ function adopt_instance()
     while [[ -z ${sapi_instance} && ${i} -lt 48 ]]; do
         sapi_instance=$(curl ${SAPI_URL}/instances -sS -X POST \
             -H content-type:application/json \
-            -d "{ \"service_uuid\" : \"${service_uuid}\", \"uuid\" : \"${instance_uuid}\" }" \
+            -d "{ \"service_uuid\" : \"${service_uuid}\", " \
+                "\"uuid\" : \"${instance_uuid}\" }" \
         | json -H uuid)
         if [[ -z ${sapi_instance} ]]; then
-            echo "Unable to adopt ${AGENT} ${instance_uuid} into sapi yet.  Sleeping..."
+            echo "Unable to adopt ${AGENT} ${instance_uuid} into sapi yet." \
+                "Sleeping..."
             sleep 5
         fi
         i=$((${i} + 1))
     done
 
-    [[ -n ${sapi_instance} ]] || warn_and_exit "Unable to adopt ${instance_uuid} into SAPI"
+    [[ -n ${sapi_instance} ]] \
+        || warn_and_exit "Unable to adopt ${instance_uuid} into SAPI"
     echo "Adopted service ${AGENT} to instance ${instance_uuid}"
 }
 
 function add_config_agent_instance()
 {
-    local instance_uuid=$(cat $ETC_DIR/$AGENT)
+    local instance_uuid
+    instance_uuid=$(cat $ETC_DIR/$AGENT)
 
     if [[ -z ${instance_uuid} ]]; then
         instance_uuid=$(uuid -v4)
@@ -155,7 +161,8 @@ import_smf_manifest
 # disabled and avoid running any SAPI-dependant configuration. sapi_domain is
 # zero length when the upgrade scripts we need were not executed for this CN
 if [[ -z $CONFIG_sapi_domain ]]; then
-    echo "sapi_domain was not found on node.config, agent will be installed but not configured"
+    echo "sapi_domain was not found on node.config, agent will be" \
+        "installed but not configured"
     exit 0
 fi
 
@@ -166,12 +173,13 @@ IMGAPI_URL=http://${CONFIG_imgapi_domain}
 # install script runs in the following circumstances:
 # 1. (don't call adopt) hn=1, sapi=0: first hn boot, disable agent, exit 0
 # 2. (call adopt) hn=1, sapi=1: upgrades, run script, get-or-create instance
-# 3. (call adopt) hn=0, sapi=0: new cns, cn upgrades, run script, get-or-create instance
+# 3. (call adopt) hn=0, sapi=0: new cns, cn upgrades, run script, get-or-create
+#    instance
 # 4. (call adopt) hn=0, sapi=1: no sdc-sapi on CNs, unexpected but possible
 is_headnode=$(sysinfo | json "Boot Parameters".headnode)
 have_sapi=false
 
-sapi_ping="curl http://$CONFIG_sapi_domain/ping --connect-timeout 2 -H 'accept-version:*'"
+sapi_ping="curl ${SAPI_URL}/ping --connect-timeout 2 -H 'accept-version:*'"
 if $sapi_ping; then
     have_sapi="true"
 fi
@@ -197,13 +205,14 @@ MIN_VALID_SAPI_VERSION=20140703
 # We need at least a MIN_VALID_SAPI_VERSION image so type=agent suport is there.
 # When the SAPI version doesn't match the expected format we ignore this script
 #
-valid_sapi=$(curl ${IMGAPI_URL}/images/$(curl ${SAPI_URL}/services?name=sapi | json -Ha params.image_uuid) \
+valid_sapi=$(curl ${IMGAPI_URL}/images/$(curl ${SAPI_URL}/services?name=sapi \
+    | json -Ha params.image_uuid) \
     | json -e \
-    "var splitVersion = this.version.split('-');
-    if (splitVersion[0] === 'master') {
-        this.validSapi = splitVersion[1].substr(0, 8) >= '$MIN_VALID_SAPI_VERSION';
-    } else if (splitVersion[0] === 'release') {
-        this.validSapi = splitVersion[1] >= '$MIN_VALID_SAPI_VERSION';
+    "var splitVer = this.version.split('-');
+    if (splitVer[0] === 'master') {
+        this.validSapi = splitVer[1].substr(0, 8) >= '$MIN_VALID_SAPI_VERSION';
+    } else if (splitVer[0] === 'release') {
+        this.validSapi = splitVer[1] >= '$MIN_VALID_SAPI_VERSION';
     } else {
         this.validSapi = false;
     }
