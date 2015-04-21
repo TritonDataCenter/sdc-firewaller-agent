@@ -123,6 +123,16 @@ function adopt_instance()
     echo "Adopted service ${AGENT} to instance ${instance_uuid}"
 }
 
+function save_instance_uuid()
+{
+    local instance_uuid=$(cat $ETC_DIR/$AGENT)
+
+    if [[ -z ${instance_uuid} ]]; then
+        instance_uuid=$(uuid -v4)
+        echo $instance_uuid > $ETC_DIR/$AGENT
+    fi
+}
+
 # ---- mainline
 
 import_smf_manifest
@@ -157,6 +167,7 @@ fi
 # case 1) is first time this agent is installed on the headnode.
 # headnode.sh takes care of adopting it into SAPI
 if [[ $is_headnode == "true" ]] && [[ $have_sapi == "false" ]]; then
+    save_instance_uuid
     exit 0
 fi
 
