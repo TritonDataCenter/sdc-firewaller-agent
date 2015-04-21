@@ -103,20 +103,11 @@ function adopt_instance()
     [[ -n ${service_uuid} ]] || \
         warn_and_exit "Unable to get service_uuid for role ${AGENT} from SAPI"
 
-    i=0
-    while [[ -z ${sapi_instance} && ${i} -lt 48 ]]; do
-        sapi_instance=$(curl ${SAPI_URL}/instances -sS -X POST \
-            -H content-type:application/json \
-            -d "{ \"service_uuid\" : \"${service_uuid}\", " \
-                "\"uuid\" : \"${instance_uuid}\" }" \
-        | json -H uuid)
-        if [[ -z ${sapi_instance} ]]; then
-            echo "Unable to adopt ${AGENT} ${instance_uuid} into sapi yet." \
-                "Sleeping..."
-            sleep 5
-        fi
-        i=$((${i} + 1))
-    done
+    sapi_instance=$(curl ${SAPI_URL}/instances -sS -X POST \
+        -H content-type:application/json \
+        -d "{ \"service_uuid\" : \"${service_uuid}\", " \
+            "\"uuid\" : \"${instance_uuid}\" }" \
+    | json -H uuid)
 
     [[ -n ${sapi_instance} ]] \
         || warn_and_exit "Unable to adopt ${instance_uuid} into SAPI"
