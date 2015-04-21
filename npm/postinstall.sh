@@ -91,15 +91,9 @@ function adopt_instance()
     local sapi_instance=""
     local i=0
 
-    while [[ -z ${service_uuid} && ${i} -lt 48 ]]; do
-        service_uuid=$(curl "${SAPI_URL}/services?type=agent&name=${AGENT}"\
-            -sS -H accept:application/json | json -Ha uuid)
-        if [[ -z ${service_uuid} ]]; then
-            echo "Unable to get service_uuid from sapi yet.  Sleeping..."
-            sleep 5
-        fi
-        i=$((${i} + 1))
-    done
+    service_uuid=$(curl "${SAPI_URL}/services?type=agent&name=${AGENT}"\
+        -sS -H accept:application/json | json -Ha uuid)
+
     [[ -n ${service_uuid} ]] || \
         warn_and_exit "Unable to get service_uuid for role ${AGENT} from SAPI"
 
