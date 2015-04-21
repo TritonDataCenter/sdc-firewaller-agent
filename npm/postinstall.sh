@@ -82,6 +82,8 @@ function adopt_instance_if_necessary()
     fi
 }
 
+# This is a best effort. We rely into a cn-agent dedicated task to register
+# new agent instances when needed.
 function adopt_instance()
 {
     local instance_uuid=$1
