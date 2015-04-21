@@ -125,7 +125,8 @@ function adopt_instance()
 
 function save_instance_uuid()
 {
-    local instance_uuid=$(cat $ETC_DIR/$AGENT)
+    local instance_uuid
+    instance_uuid=$(cat $ETC_DIR/$AGENT)
 
     if [[ -z ${instance_uuid} ]]; then
         instance_uuid=$(uuid -v4)
