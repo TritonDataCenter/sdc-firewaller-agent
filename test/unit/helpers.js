@@ -256,6 +256,7 @@ function createAgent(t, connect, callback) {
     var conf = JSON.parse(fs.readFileSync(path.normalize(
         __dirname + '/../../config.json'), 'utf-8'));
 
+    conf.listenIP = '127.0.0.1';
     conf.serverUUID = LOCAL_SERVER;
     conf.imageVersion = '20140201T183410Z';
     conf.fwapi.host = 'localhost';

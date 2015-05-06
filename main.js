@@ -56,47 +56,49 @@ config.sdc(function (err, sdcConfig) {
         }
     });
 
-    config.getSysinfoValue('UUID', function (err2, uuid) {
+    config.sysinfo(function (err2, sysinfo) {
         if (err2) {
-            LOG.error(err2, 'Error getting sysinfo UUID');
+            LOG.error(err2, 'Error getting sysinfo');
             return;
         }
 
-        config.getSysinfoValue('Live Image', function (lErr, image) {
-            if (lErr) {
-                LOG.error(lErr, 'Error getting sysinfo Live Image');
+        var image = sysinfo['Live Image'];
+        var uuid = sysinfo.UUID;
+
+        CONFIG.log = LOG;
+        CONFIG.serverUUID = uuid;
+        CONFIG.imageVersion = image;
+        CONFIG.fwapi.host = sdcConfig.fwapi_domain;
+        CONFIG.vmapi = { host: sdcConfig.vmapi_domain };
+        CONFIG.listenIP = config.findSysinfoAdminIP(sysinfo);
+
+        if (!CONFIG.listenIP) {
+            LOG.error({ sysinfo: sysinfo }, 'Error finding sysinfo admin IP');
+            return;
+        }
+
+        var agent;
+        try {
+            agent = firewaller.create(CONFIG);
+        } catch (createErr) {
+            LOG.error(createErr, 'Error creating agent');
+            return;
+        }
+
+        agent.sync(function (err3) {
+            if (err3) {
+                LOG.error(err3, 'Error doing initial sync');
                 return;
             }
 
-            CONFIG.log = LOG;
-            CONFIG.serverUUID = uuid;
-            CONFIG.imageVersion = image;
-            CONFIG.fwapi.host = sdcConfig.fwapi_domain;
-            CONFIG.vmapi = { host: sdcConfig.vmapi_domain };
-
-            var agent;
-            try {
-                agent = firewaller.create(CONFIG);
-            } catch (createErr) {
-                LOG.error(createErr, 'Error creating agent');
-                return;
-            }
-
-            agent.sync(function (err3) {
-                if (err3) {
-                    LOG.error(err3, 'Error doing initial sync');
+            agent.connect(function (err4) {
+                if (err4) {
+                    LOG.error(err4, 'Error connecting to %s',
+                        sdcConfig.fwapi_domain);
                     return;
                 }
 
-                agent.connect(function (err4) {
-                    if (err4) {
-                        LOG.error(err4, 'Error connecting to %s',
-                            sdcConfig.fwapi_domain);
-                        return;
-                    }
-
-                    LOG.info('Connected to %s', sdcConfig.fwapi_domain);
-                });
+                LOG.info('Connected to %s', sdcConfig.fwapi_domain);
             });
         });
     });
