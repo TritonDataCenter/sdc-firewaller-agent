@@ -5,27 +5,21 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright 2015 Joyent, Inc.
 #
 
 #
 # Firewaller agent Makefile
 #
 
-
-
 #
 # Tools
 #
-
 NODEUNIT		:= ./node_modules/.bin/nodeunit
-
-
 
 #
 # Files
 #
-
 BASH_FILES  := npm/postinstall.sh npm/postuninstall.sh
 JS_FILES	:= $(shell find lib test -name '*.js') main.js
 JSON_FILES	 = package.json config.json
@@ -58,6 +52,15 @@ RELEASE_MANIFEST := $(NAME)-$(STAMP).manifest
 RELSTAGEDIR          := /tmp/$(STAMP)
 DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 
+#
+# Due to the unfortunate nature of npm, the Node Package Manager, there appears
+# to be no way to assemble our dependencies without running the lifecycle
+# scripts.  These lifecycle scripts should not be run except in the context of
+# an agent installation or uninstallation, so we provide a magic environment
+# varible to disable them here.
+#
+NPM_ENV =		SDC_AGENT_SKIP_LIFECYCLE=yes
+RUN_NPM_INSTALL =	$(NPM_ENV) $(NPM) install
 
 #
 # Repo-specific targets
@@ -74,7 +77,7 @@ $(NODEUNIT): node_modules
 # Remove binary modules - we use the ones in the platform that are built
 # against the platform node
 node_modules: | $(NPM_EXEC)
-	$(NPM) install
+	$(RUN_NPM_INSTALL)
 	cp -r deps/fw node_modules/
 
 CLEAN_FILES += $(NODEUNIT) ./node_modules/nodeunit
