@@ -16,7 +16,7 @@
     "retry": {
         "maxTimeout": 6000,
         "minTimeout": 100,
-        "retries": "Infinity"
+        "retries": 5
     },
     "syncInterval": 30
 }

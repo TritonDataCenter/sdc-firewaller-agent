@@ -87,8 +87,8 @@ config.sdc(function (err, sdcConfig) {
 
         agent.sync(function (err3) {
             if (err3) {
-                LOG.error(err3, 'Error doing initial sync');
-                return;
+                LOG.error(err3, 'Error doing initial startup sync. ' +
+                    'Continuing...');
             }
 
             agent.connect(function (err4) {
