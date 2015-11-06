@@ -17,7 +17,7 @@ contribution guidelines, issues, and general documentation, visit the main
 Firewaller is the SDC compute node agent responsible for syncing firewall
 rules and associated VM data from FWAPI and VMAPI. For more information on
 how it interacts with the rest of SmartDataCenter, consult the
-[Firewall API architecture document](https://github.com/joyent/sdc-fwapi/blob/master/docs/architecture.restdown).
+[Firewall API architecture document](https://github.com/joyent/sdc-fwapi/blob/master/docs/architecture.md).
 
 
 # Repository
