@@ -1,5 +1,2 @@
 /node_modules
 /smf/manifests/firewaller.xml
-/build/
-/firewaller-*.tgz
-/firewaller-*.manifest
