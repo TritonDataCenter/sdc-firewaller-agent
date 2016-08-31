@@ -59,7 +59,7 @@ function ipfRule(t, opts) {
     assert.object(opts.vm, 'opts.vm');
     assert.string(opts.vm.uuid, 'opts.vm.uuid');
 
-    var ipfConfs = fwHelper.zoneIPFconfigs();
+    var ipfConfs = fwHelper.zoneIPFconfigs(4);
     var cur = ipfConfs;
     var curStr;
     // XXX: allow setting pass / block

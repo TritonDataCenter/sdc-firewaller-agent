@@ -69,7 +69,7 @@ exports['update firewall_enabled'] = {
             h.rule({
                 created_by: 'fwapi',
                 owner_uuid: d.owners[0],
-                rule:'FROM tag web = true TO tag private = true '
+                rule: 'FROM tag web = true TO tag private = true '
                     + 'ALLOW tcp PORT 22'
             })
         ];
@@ -324,11 +324,8 @@ exports['update so rules no longer affect VM'] = {
                 port: 22,
                 proto: 'tcp',
                 target: 'any',
-                vm: d.vms[0]
-                // XXX: this is wrong - the VM's ipf rules should be
-                // rewritten. Uncomment the next line once FWAPI-200
-                // is fixed:
-                // doesNotExist: true
+                vm: d.vms[0],
+                doesNotExist: true
             });
 
             return t.done();

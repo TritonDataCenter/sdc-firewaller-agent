@@ -175,6 +175,7 @@ function setupMocks() {
         './vmapi',
         './vms',
         './vm-add',
+        './vm-common',
         './vm-delete',
         './vm-update',
         '../fw',
