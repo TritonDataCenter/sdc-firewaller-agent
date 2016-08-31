@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright (c) 2014, Joyent, Inc.
+# Copyright 2016, Joyent, Inc.
 #
 
 #
@@ -74,8 +74,9 @@ $(NODEUNIT): node_modules
 # Remove binary modules - we use the ones in the platform that are built
 # against the platform node
 node_modules: | $(NPM_EXEC)
-	$(NPM) install
+	MAKE_OVERRIDES="CTFCONVERT=/bin/true CTFMERGE=/bin/true" $(NPM) install
 	cp -r deps/fw node_modules/
+	cp -r deps/fw-overlay/* node_modules/fw
 
 CLEAN_FILES += $(NODEUNIT) ./node_modules/nodeunit
 

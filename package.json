@@ -12,6 +12,7 @@
         "clone": "0.1.11",
         "fast-stream": "git+https://github.com/joyent/sdc-fast-stream.git#893d59d",
         "jsprim": "0.5.0",
+        "lockfd": "1.0.1",
         "node-uuid": "1.2.0",
         "once": "1.1.1",
         "restify": "2.6.1",
