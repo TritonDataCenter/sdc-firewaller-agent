@@ -45,7 +45,8 @@ var d = {
 exports.setup = function (t) {
     h.createAgent(t, true, function (err, a) {
         agent = a;
-        return t.done();
+        t.ifError(err, 'createAgent() error');
+        t.done();
     });
 };
 
@@ -68,13 +69,14 @@ exports['add'] = {
             h.rule({
                 created_by: 'fwapi',
                 owner_uuid: owners[0],
-                rule: 'FROM tag role = db TO tag role = www ALLOW tcp PORT 80'
+                rule: 'FROM tag "role" = "db" TO tag "role" = "www" ALLOW '
+                    + 'tcp PORT 80'
             }),
             h.rule({
                 created_by: 'fwapi',
                 owner_uuid: owners[0],
-                rule:
-                    'FROM tag role = test TO tag role = qa ALLOW tcp PORT 8080'
+                rule: 'FROM tag "role" = "test" TO tag "role" = "qa" ALLOW '
+                    + 'tcp PORT 8080'
             })
         ];
 
@@ -249,7 +251,7 @@ exports['firewall_enabled=false'] = {
             h.rule({
                 created_by: 'fwapi',
                 owner_uuid: owners[1],
-                rule: 'FROM ip 10.0.1.1 TO tag internal ALLOW tcp PORT 80'
+                rule: 'FROM ip 10.0.1.1 TO tag "internal" ALLOW tcp PORT 80'
             })
         ];
 

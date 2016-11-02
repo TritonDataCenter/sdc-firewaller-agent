@@ -14,7 +14,6 @@
 
 var h = require('./helpers');
 var mod_vm = require('../lib/vm');
-var util = require('util');
 
 
 
@@ -33,7 +32,8 @@ var agent;
 exports.setup = function (t) {
     h.createAgent(t, true, function (err, a) {
         agent = a;
-        return t.done();
+        t.ifError(err, 'createAgent() error');
+        t.done();
     });
 };
 

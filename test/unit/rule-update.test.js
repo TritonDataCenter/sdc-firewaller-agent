@@ -17,7 +17,6 @@ var h = require('./helpers');
 var mod_rule = require('../lib/rule');
 var mod_uuid = require('node-uuid');
 var mod_vm = require('../lib/vm');
-var util = require('util');
 
 
 
@@ -85,7 +84,7 @@ exports['update to not affect local VMs'] = {
                 created_by: 'fwapi',
                 enabled: true,
                 owner_uuid: d.owners[0],
-                rule: 'FROM any TO tag dev = proj1 ALLOW tcp PORT 22'
+                rule: 'FROM any TO tag "dev" = "proj1" ALLOW tcp PORT 22'
             })
         ];
 
@@ -116,7 +115,7 @@ exports['update to not affect local VMs'] = {
     // still update the rule on the CN, even though it no longer targets the
     // VM that it used to apply to
     'update rule': function (t) {
-        d.rules[0].rule = 'FROM any TO tag dev = proj2 ALLOW tcp PORT 22';
+        d.rules[0].rule = 'FROM any TO tag "dev" = "proj2" ALLOW tcp PORT 22';
 
         mod_rule.update(t, d.rules[0], function (err) {
             t.ifError(err, 'update rule');

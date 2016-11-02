@@ -47,7 +47,8 @@ var d = {
 exports.setup = function (t) {
     h.createAgent(t, true, function (err, a) {
         agent = a;
-        return t.done();
+        t.ifError(err, 'createAgent() error');
+        t.done();
     });
 };
 
@@ -69,7 +70,7 @@ exports['update firewall_enabled'] = {
             h.rule({
                 created_by: 'fwapi',
                 owner_uuid: d.owners[0],
-                rule: 'FROM tag web = true TO tag private = true '
+                rule: 'FROM tag "web" = "true" TO tag "private" = "true" '
                     + 'ALLOW tcp PORT 22'
             })
         ];
@@ -263,7 +264,7 @@ exports['update so rules no longer affect VM'] = {
                 created_by: 'fwapi',
                 enabled: true,
                 owner_uuid: d.owners[0],
-                rule: 'FROM any TO tag dev = proj1 ALLOW tcp PORT 22'
+                rule: 'FROM any TO tag "dev" = "proj1" ALLOW tcp PORT 22'
             })
         ];
 

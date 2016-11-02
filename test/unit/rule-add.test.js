@@ -12,13 +12,11 @@
  * add-rule task unit tests
  */
 
-var fmt = require('util').format;
 var h = require('./helpers');
 var mod_cache = require('../lib/cache');
 var mod_rule = require('../lib/rule');
 var mod_uuid = require('node-uuid');
 var mod_vm = require('../lib/vm');
-var util = require('util');
 
 
 
@@ -98,8 +96,9 @@ exports['multiple tags'] = {
                 created_by: 'fwapi',
                 enabled: true,
                 owner_uuid: owners[0],
-                rule: 'FROM (tag couch = 1 OR tag couch = 2) TO ' +
-                    '(tag couch = 1 OR tag couch = 2) ALLOW tcp PORT 5984'
+                rule: 'FROM (tag "couch" = "1" OR tag "couch" = "2") TO '
+                    + '(tag "couch" = "1" OR tag "couch" = "2") ALLOW '
+                    + 'tcp PORT 5984'
             })
         ];
 

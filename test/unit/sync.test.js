@@ -232,7 +232,8 @@ exports['fwapi versions override'] = {
             // In FWAPI only
             h.rule({
                 owner_uuid: h.OWNER_UUID,
-                rule: 'FROM tag something = else TO all vms ALLOW tcp PORT 85',
+                rule: 'FROM tag "something" = "else" TO all vms ALLOW '
+                    + 'tcp PORT 85',
                 created_by: 'fwapi'
             })
         ];

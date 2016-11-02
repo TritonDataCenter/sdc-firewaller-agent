@@ -17,7 +17,6 @@ var h = require('./helpers');
 var mod_rule = require('../lib/rule');
 var mod_rvm = require('../lib/rvm');
 var mod_uuid = require('node-uuid');
-var util = require('util');
 
 
 
@@ -56,7 +55,8 @@ var d = {
 exports.setup = function (t) {
     h.createAgent(t, true, function (err, a) {
         agent = a;
-        return t.done();
+        t.ifError(err, 'createAgent() error');
+        t.done();
     });
 };
 
@@ -151,7 +151,7 @@ exports['add'] = {
         d.rules.push(h.rule({
             created_by: 'fwapi',
             owner_uuid: owners[0],
-            rule: fmt('FROM tag foo TO vm %s ALLOW tcp PORT all',
+            rule: fmt('FROM tag "foo" TO vm %s ALLOW tcp PORT all',
                 d.vms[1].uuid)
         }));
 
@@ -183,7 +183,7 @@ exports['update'] = {
         d.rules.push(h.rule({
             created_by: 'fwapi',
             owner_uuid: owners[1],
-            rule: fmt('FROM tag foo = bar TO vm %s ALLOW tcp PORT all',
+            rule: fmt('FROM tag "foo" = "bar" TO vm %s ALLOW tcp PORT all',
                 d.vms[2].uuid)
         }));
         d.idx = d.rules.length - 1;
@@ -240,7 +240,7 @@ exports['update'] = {
 
     'update 1: add vm': function (t) {
         d.rules[d.idx].rule = fmt(
-            'FROM (tag foo = bar OR vm %s) TO vm %s ALLOW tcp PORT all',
+            'FROM (tag "foo" = "bar" OR vm %s) TO vm %s ALLOW tcp PORT all',
                 d.vms[6].uuid, d.vms[2].uuid);
 
         mod_rule.update(t, d.rules[d.idx]);

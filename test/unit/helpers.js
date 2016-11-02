@@ -24,7 +24,6 @@ var fwHelpers = require('../../node_modules/fw/test/lib/helpers');
 var extend = require('xtend');
 var fs = require('fs');
 var jsprim = require('jsprim');
-var mockery = require('mockery');
 var mocks = require('./mocks');
 var mod_uuid = require('node-uuid');
 var once = require('once');
@@ -46,7 +45,6 @@ var CLIENT = restify.createJsonClient({
     agent: false,
     url: 'http://localhost:2021'
 });
-var CUR_IP = 1;
 var ID = 1;
 var INITIAL_DATA;
 var LOCAL_SERVER = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
@@ -408,14 +406,6 @@ function localRVMs() {
 /**
  * Generate a VMAPI query string based on the array elements
  */
-function vmapiQuery(opts) {
-    return '';
-}
-
-
-/**
- * Generate a VMAPI query string based on the array elements
- */
 function vmapiReq(opts) {
     assert.object(opts, 'opts');
 
@@ -521,7 +511,6 @@ module.exports = {
     uuid: generateUUID,
     uuidSort: uuidSort,
     vm: generateVM,
-    vmapiQuery: vmapiQuery,
     vmapiReq: vmapiReq,
     vmapiReqs: mocks._vmapiReqs,
     vmToRVM: convertVMtoRVM

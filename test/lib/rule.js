@@ -13,10 +13,8 @@
  */
 
 var assert = require('assert-plus');
-var clone = require('clone');
 var h = require('../unit/helpers');
 var mocks = require('../unit/mocks');
-var restify = require('restify');
 
 
 
