@@ -12,6 +12,8 @@
  * Mock objects for firewaller unit tests
  */
 
+'use strict';
+
 var assert = require('assert-plus');
 var bunyan = require('bunyan');
 var clone = require('clone');
@@ -79,7 +81,7 @@ function values(obj, sort) {
 
 
 
-function execFileVmadm(cmd, args, opts, callback) {
+function execFileVmadm(cmd, args, _, callback) {
     assert.equal(cmd, '/usr/sbin/vmadm');
     assert.arrayOfString(args, 'args');
     assert.equal(args[0], 'lookup');
@@ -109,7 +111,7 @@ function createWriteStream() {
 
 
 
-function mockFWAPI(opts) {
+function MockFWAPI(opts) {
     assert.object(opts, 'opts');
     this.log = LOG.child({ component: 'fwapi' });
     this.client = {
@@ -118,7 +120,7 @@ function mockFWAPI(opts) {
 }
 
 
-mockFWAPI.prototype._addReq = function addReq(route, params, callback) {
+MockFWAPI.prototype._addReq = function addReq(route, params) {
     if (!FWAPI_REQS.hasOwnProperty(route)) {
         FWAPI_REQS[route] = [];
     }
@@ -127,7 +129,7 @@ mockFWAPI.prototype._addReq = function addReq(route, params, callback) {
 };
 
 
-mockFWAPI.prototype.createRule = function createRule(params, callback) {
+MockFWAPI.prototype.createRule = function createRule(params, callback) {
     if (!params.hasOwnProperty('uuid')) {
         return callback(new Error('uuid is required!'));
     }
@@ -142,7 +144,7 @@ mockFWAPI.prototype.createRule = function createRule(params, callback) {
 };
 
 
-mockFWAPI.prototype.post = function post(endpoint, params, callback) {
+MockFWAPI.prototype.post = function post(endpoint, params, callback) {
     assert.equal(endpoint, '/resolve');
     assert.object(params, 'params');
     assert.string(params.owner_uuid, 'params.owner_uuid');
@@ -165,7 +167,7 @@ mockFWAPI.prototype.post = function post(endpoint, params, callback) {
 
 
 
-function mockVMAPI(opts) {
+function MockVMAPI(opts) {
     assert.object(opts, 'opts');
     this.log = LOG.child({ component: 'vmapi' });
     this.client = {
@@ -174,7 +176,7 @@ function mockVMAPI(opts) {
 }
 
 
-mockVMAPI.prototype.get = function vmsGet(params, callback) {
+MockVMAPI.prototype.get = function vmsGet(params, callback) {
     assert.object(params, 'params');
     assert.string(params.path, 'params.path');
     assert.object(params.query, 'params.query');
@@ -255,7 +257,7 @@ function getVMAPIrequests() {
 function localVMs() {
     return clone(values(VMS).filter(function (vm) {
         return (vm.hasOwnProperty('server_uuid') &&
-            vm.server_uuid == LOCAL_SERVER);
+            vm.server_uuid === LOCAL_SERVER);
     }));
 }
 
@@ -344,7 +346,7 @@ module.exports = {
         createLogger: function createLogger() {
             // Prevent createLogger() in fw.js from adding a file stream
             // to our logger:
-            FW_LOG.child = function (args) {
+            FW_LOG.child = function (_) {
                 return FW_LOG;
             };
 
@@ -356,8 +358,8 @@ module.exports = {
     },
 
     'sdc-clients': {
-        FWAPI: mockFWAPI,
-        VMAPI: mockVMAPI
+        FWAPI: MockFWAPI,
+        VMAPI: MockVMAPI
     },
 
     // -- mock data getters / setters,  other non-mock stuff

@@ -12,10 +12,12 @@
  * update-rule task unit tests
  */
 
+'use strict';
+
 var fmt = require('util').format;
 var h = require('./helpers');
 var mod_rule = require('../lib/rule');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 var mod_vm = require('../lib/vm');
 
 
@@ -40,7 +42,9 @@ var d = {
 exports.setup = function (t) {
     h.createAgent(t, true, function (err, a) {
         agent = a;
-        return t.done();
+        t.ifError(err, 'createAgent() error');
+        t.ok(agent, 'agent created');
+        t.done();
     });
 };
 
@@ -96,8 +100,11 @@ exports['update to not affect local VMs'] = {
         mod_rule.add(t, d.rules[0], function (err, msg) {
             t.ifError(err, 'add rule');
             if (err) {
-                return t.done();
+                t.done();
+                return;
             }
+
+            t.ok(msg, 'message returned');
 
             mod_rule.localEquals(t, d.rules, 'rule added');
             mod_vm.ipfRule(t, {
@@ -107,7 +114,7 @@ exports['update to not affect local VMs'] = {
                 target: 'any',
                 vm: d.vms[0]
             });
-            return t.done();
+            t.done();
         });
     },
 

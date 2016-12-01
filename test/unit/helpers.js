@@ -12,6 +12,7 @@
  * unit test helpers
  */
 
+'use strict';
 
 var assert = require('assert-plus');
 var bunyan = require('bunyan');
@@ -25,7 +26,7 @@ var extend = require('xtend');
 var fs = require('fs');
 var jsprim = require('jsprim');
 var mocks = require('./mocks');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 var once = require('once');
 var path = require('path');
 var pred = require('../../lib/pred');
@@ -183,7 +184,6 @@ function setupMocks() {
         '../vmapi',
         '../../lib/agent',
         '../../spdy',
-        'async',
         'backoff',
         'buffer',
         'crypto',
@@ -206,6 +206,7 @@ function setupMocks() {
         'semver',
         'spdy',
         'url',
+        'uuid',
         'zlib'
     ];
 
@@ -284,7 +285,8 @@ function createAgent(t, connect, callback) {
         AGENT = firewaller.create(conf);
         t.ok(AGENT, 'created agent');
         if (!connect) {
-            return callback(AGENT);
+            callback(AGENT);
+            return;
         }
 
         AGENT.connect(function (err2) {
@@ -469,7 +471,7 @@ function sendMessage(name, value, callback) {
 
     AGENT.once('task-complete', done);
     STREAM.send(toSend);
-    setTimeout(done, 2000);
+    setTimeout(done, 2000, new Error('timed out'));
 }
 
 

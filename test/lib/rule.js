@@ -12,6 +12,8 @@
  * rule helpers
  */
 
+'use strict';
+
 var assert = require('assert-plus');
 var h = require('../unit/helpers');
 var mocks = require('../unit/mocks');

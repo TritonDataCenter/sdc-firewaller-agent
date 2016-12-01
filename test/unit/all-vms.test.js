@@ -12,11 +12,13 @@
  * Tests for adding / updating 'all vms' rules
  */
 
+'use strict';
+
 var fmt = require('util').format;
 var h = require('./helpers');
 var mod_rule = require('../lib/rule');
 var mod_rvm = require('../lib/rvm');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 
 
 

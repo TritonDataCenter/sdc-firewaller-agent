@@ -12,10 +12,12 @@
  * vm.add task unit tests
  */
 
+'use strict';
+
 var h = require('./helpers');
 var mod_cache = require('../lib/cache');
 var mod_rule = require('../lib/rule');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 var mod_vm = require('../lib/vm');
 
 

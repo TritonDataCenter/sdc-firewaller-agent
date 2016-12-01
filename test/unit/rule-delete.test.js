@@ -12,9 +12,11 @@
  * del-rule task unit tests
  */
 
+'use strict';
+
 var h = require('./helpers');
 var mod_rule = require('../lib/rule');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 var mod_vm = require('../lib/vm');
 
 
@@ -35,6 +37,7 @@ exports.setup = function (t) {
     h.createAgent(t, true, function (err, a) {
         agent = a;
         t.ifError(err, 'createAgent() error');
+        t.ok(agent, 'agent created');
         t.done();
     });
 };
@@ -59,7 +62,7 @@ exports['vmadm list error'] = function (t) {
             t.equal(err.message, errMsg, 'error message');
         }
 
-        return t.done();
+        t.done();
     });
 };
 

@@ -12,8 +12,10 @@
  * tests for the VM cache
  */
 
+'use strict';
+
 var mod_cache = require('../lib/cache');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 var VMCache = require('../../lib/cache').VMCache;
 
 

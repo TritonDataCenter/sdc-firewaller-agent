@@ -12,6 +12,8 @@
  * Remote VM helpers
  */
 
+'use strict';
+
 var h = require('../unit/helpers');
 
 

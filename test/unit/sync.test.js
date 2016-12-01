@@ -12,11 +12,13 @@
  * sync task unit tests
  */
 
+'use strict';
+
 var extend = require('xtend');
 var h = require('./helpers');
 var mod_rule = require('../lib/rule');
 var mod_rvm = require('../lib/rvm');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 var mod_vm = require('../lib/vm');
 
 

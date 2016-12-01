@@ -12,6 +12,8 @@
  * vm.delete task unit tests
  */
 
+'use strict';
+
 var h = require('./helpers');
 var mod_vm = require('../lib/vm');
 
@@ -32,6 +34,7 @@ var agent;
 exports.setup = function (t) {
     h.createAgent(t, true, function (err, a) {
         agent = a;
+        t.ok(agent, 'agent created');
         t.ifError(err, 'createAgent() error');
         t.done();
     });

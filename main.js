@@ -12,6 +12,8 @@
  * Firewaller agent
  */
 
+'use strict';
+
 var assert = require('assert-plus');
 var bunyan = require('bunyan');
 var config = require('./lib/config');

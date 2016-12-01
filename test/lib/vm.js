@@ -12,6 +12,8 @@
  * VM helpers
  */
 
+'use strict';
+
 var assert = require('assert-plus');
 var h = require('../unit/helpers');
 var fwHelper = require('../../node_modules/fw/test/lib/helpers');

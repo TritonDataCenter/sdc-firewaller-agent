@@ -33,9 +33,11 @@ JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE	 = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS	 = -f tools/jsstyle.conf
+ESLINT		 = ./node_modules/.bin/eslint
+ESLINT_CONF	 = tools/eslint.node.conf
+ESLINT_FILES	 = $(JS_FILES)
 REPO_MODULES	 = src/node-dummy
 SMF_MANIFESTS_IN = smf/manifests/firewaller.xml.in
-SDC_CLIENTS		 = node_modules/sdc-clients
 
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_VERSION=v0.10.26
@@ -64,17 +66,20 @@ DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 #
 
 .PHONY: all
-all: $(SMF_MANIFESTS) | $(NODEUNIT) $(REPO_DEPS) $(SDC_CLIENTS)
+all: $(SMF_MANIFESTS) | node_modules $(REPO_DEPS)
 
-$(SDC_CLIENTS):
-	./tools/mk-sdc-clients-light.sh $(shell json -f package.json platformDependencies.sdc-clients | cut -d'#' -f2) $(SDC_CLIENTS) fwapi.js vmapi.js
+$(NODEUNIT): | node_modules
+	$(NPM) install
 
-$(NODEUNIT): node_modules
+$(ESLINT): | $(NPM_EXEC)
+	$(NPM) install \
+	    eslint@`json -f package.json devDependencies.eslint` \
+	    eslint-plugin-joyent@`json -f package.json devDependencies.eslint-plugin-joyent`
 
 # Remove binary modules - we use the ones in the platform that are built
 # against the platform node
 node_modules: | $(NPM_EXEC)
-	MAKE_OVERRIDES="CTFCONVERT=/bin/true CTFMERGE=/bin/true" $(NPM) install
+	MAKE_OVERRIDES="CTFCONVERT=/bin/true CTFMERGE=/bin/true" $(NPM) install --production
 	cp -r deps/fw node_modules/
 	cp -r deps/fw-overlay/* node_modules/fw
 
@@ -130,6 +135,9 @@ publish: release
 	cp $(TOP)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 	cp $(TOP)/$(RELEASE_MANIFEST) $(BITS_DIR)/$(NAME)/$(RELEASE_MANIFEST)
 
+.PHONY: check
+check:: $(ESLINT)
+	$(ESLINT) -c $(ESLINT_CONF) $(ESLINT_FILES)
 
 include ./tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)

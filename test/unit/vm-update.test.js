@@ -12,10 +12,12 @@
  * vm.update task unit tests
  */
 
+'use strict';
+
 var h = require('./helpers');
 var mod_cache = require('../lib/cache');
 var mod_rule = require('../lib/rule');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 var mod_vm = require('../lib/vm');
 var util = require('util');
 
@@ -275,9 +277,11 @@ exports['update so rules no longer affect VM'] = {
         });
 
         mod_rule.add(t, d.rules[0], function (err, msg) {
+            t.ok(msg, 'message returned');
             t.ifError(err, 'add rule');
             if (err) {
-                return t.done();
+                t.done();
+                return;
             }
 
             mod_rule.localEquals(t, d.rules, 'rule added');
@@ -289,7 +293,7 @@ exports['update so rules no longer affect VM'] = {
                 vm: d.vms[0]
             });
 
-            return t.done();
+            t.done();
         });
     },
 

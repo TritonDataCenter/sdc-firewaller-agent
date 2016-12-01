@@ -12,10 +12,12 @@
  * add-rule task unit tests
  */
 
+'use strict';
+
 var h = require('./helpers');
 var mod_cache = require('../lib/cache');
 var mod_rule = require('../lib/rule');
-var mod_uuid = require('node-uuid');
+var mod_uuid = require('uuid');
 var mod_vm = require('../lib/vm');
 
 
@@ -47,7 +49,9 @@ var d = {
 exports.setup = function (t) {
     h.createAgent(t, true, function (err, a) {
         agent = a;
-        return t.done();
+        t.ifError(err, 'createAgent() error');
+        t.ok(agent, 'agent created');
+        t.done();
     });
 };
 
@@ -69,10 +73,14 @@ exports['missing rule sent'] = function (t) {
         vms: d.vms
     });
 
-    h.send('fw.add_rule', null, function (msg) {
+    h.send('fw.add_rule', null, function (err, msg) {
         // A message received event will not be emitted, since the message
         // should be ignored
         t.ok(!msg, 'message not received');
+        t.ok(err, 'timeout error returned');
+        if (err) {
+            t.equal(err.message, 'timed out', 'correct error');
+        }
 
         mod_rule.localEquals(t, d.exp.rules, 'rule not added');
         t.deepEqual(h.localRVMs(), [], 'no remote VMs added');
@@ -114,9 +122,13 @@ exports['multiple tags'] = {
     // be added
     'add rule: vm 0 local': function (t) {
         mod_rule.add(t, d.rules[0], function (err, msg) {
+            t.ifError(err, 'error returned');
             if (err) {
-                return t.done();
+                t.done();
+                return;
             }
+
+            t.ok(msg, 'message returned');
 
             d.exp.rules = [ d.rules[0] ];
             d.exp.rvms = [ h.vmToRVM(d.vms[1]) ];
@@ -136,7 +148,7 @@ exports['multiple tags'] = {
                     [ 'couch', '2' ]
                 ]
             }), 'VMAPI request');
-            return t.done();
+            t.done();
         });
     },
 
@@ -163,9 +175,13 @@ exports['multiple tags'] = {
 
     'add rule: vm 1 local': function (t) {
         mod_rule.add(t, d.rules[0], function (err, msg) {
+            t.ifError(err, 'error returned');
             if (err) {
-                return t.done();
+                t.done();
+                return;
             }
+
+            t.ok(msg, 'message returned');
 
             d.exp.rules = [ d.rules[0] ];
             d.exp.rvms = [ h.vmToRVM(d.vms[0]) ];
@@ -185,7 +201,7 @@ exports['multiple tags'] = {
                     [ 'couch', '2' ]
                 ]
             }), 'VMAPI request');
-            return t.done();
+            t.done();
         });
     }
 };

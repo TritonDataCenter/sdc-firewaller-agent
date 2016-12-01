@@ -12,6 +12,7 @@
  * cache helpers
  */
 
+'use strict';
 
 
 // --- Internal
