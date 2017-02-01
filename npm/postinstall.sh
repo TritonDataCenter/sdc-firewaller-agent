@@ -6,7 +6,7 @@
 #
 
 #
-# Copyright (c) 2015, Joyent, Inc.
+# Copyright (c) 2017, Joyent, Inc.
 #
 
 set -o xtrace
@@ -43,12 +43,19 @@ subfile () {
   OUT=$2
   sed -e "s#@@PREFIX@@#$PREFIX#g" \
       -e "s/@@VERSION@@/$VERSION/g" \
+      -e "s#@@ROOT@@#$ROOT#g" \
+      -e "s/@@ENABLED@@/true/g" \
       $IN > $OUT
 }
 
 function import_smf_manifest()
 {
     subfile "$ROOT/smf/manifests/$AGENT.xml.in" "$SMF_DIR/$AGENT.xml"
+    if [[ $(uname -s) == "SunOS" ]]; then
+        svccfg import $SMF_DIR/$AGENT.xml
+    fi
+
+    subfile "$ROOT/smf/manifests/${AGENT}-setup.xml.in" "$SMF_DIR/${AGENT}-setup.xml"
     if [[ $(uname -s) == "SunOS" ]]; then
         svccfg import $SMF_DIR/$AGENT.xml
     fi
