@@ -57,7 +57,7 @@ function import_smf_manifest()
 
     subfile "$ROOT/smf/manifests/${AGENT}-setup.xml.in" "$SMF_DIR/${AGENT}-setup.xml"
     if [[ $(uname -s) == "SunOS" ]]; then
-        svccfg import $SMF_DIR/$AGENT.xml
+        svccfg import $SMF_DIR/${AGENT}-setup.xml
     fi
 }
 
