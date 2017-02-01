@@ -27,7 +27,7 @@
 <exec_method
   type="method"
   name="start"
-  exec="/usr/bin/ctrun -l child -o noorphan @@PREFIX@@/node/bin/node --abort_on_uncaught_exception @@PREFIX@@/main.js &amp;"
+  exec="/usr/bin/ctrun -l child -o noorphan @@ROOT@@/node/bin/node --abort_on_uncaught_exception @@ROOT@@/main.js &amp;"
   timeout_seconds="60">
   <method_context>
     <method_credential user="root" group="staff"/>
