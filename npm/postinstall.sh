@@ -43,6 +43,8 @@ subfile () {
   OUT=$2
   sed -e "s#@@PREFIX@@#$PREFIX#g" \
       -e "s/@@VERSION@@/$VERSION/g" \
+      -e "s#@@ROOT@@#$ROOT#g" \
+      -e "s/@@ENABLED@@/true/g" \
       $IN > $OUT
 }
 
