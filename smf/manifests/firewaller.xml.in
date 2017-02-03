@@ -7,7 +7,7 @@
 -->
 
 <!--
-    Copyright (c) 2014, Joyent, Inc.
+    Copyright (c) 2017, Joyent, Inc.
 -->
 
 <!--
@@ -27,12 +27,12 @@
 <exec_method
   type="method"
   name="start"
-  exec="@@PREFIX@@/lib/node_modules/firewaller/sbin/firewaller"
+  exec="/usr/bin/ctrun -l child -o noorphan @@ROOT@@/node/bin/node --abort_on_uncaught_exception @@ROOT@@/main.js &amp;"
   timeout_seconds="60">
   <method_context>
     <method_credential user="root" group="staff"/>
     <method_environment>
-      <envvar name="PATH" value="@@PREFIX@@/bin:/usr/local/bin:/opt/local/bin:/usr/bin:/usr/sbin:/bin"/>
+      <envvar name="PATH" value="@@PREFIX@@/bin:/usr/bin:/usr/sbin"/>
     </method_environment>
   </method_context>
 </exec_method>
