@@ -18,6 +18,7 @@ var assert = require('assert-plus');
 var h = require('../unit/helpers');
 var fwHelper = require('../../node_modules/fw/test/lib/helpers');
 var mocks = require('../unit/mocks');
+var util = require('util');
 
 
 
@@ -61,12 +62,13 @@ function ipfRule(t, opts) {
     assert.object(opts.vm, 'opts.vm');
     assert.string(opts.vm.uuid, 'opts.vm.uuid');
 
+    // XXX: allow setting more config options
+    assert.equal(opts.direction, 'in', 'limited to inbound for now');
+
     var ipfConfs = fwHelper.zoneIPFconfigs(4);
     var cur = ipfConfs;
     var curStr;
-    // XXX: allow setting pass / block
-    var subProps = [ opts.vm.uuid, opts.direction, 'pass', opts.proto,
-        opts.target ];
+    var subProps = [ opts.vm.uuid, opts.direction, opts.proto ];
     for (var p in subProps) {
         cur = cur[subProps[p]];
         curStr = curStr ? (curStr + '.' + subProps[p]) : subProps[p];
@@ -87,8 +89,10 @@ function ipfRule(t, opts) {
     }
 
     curStr = curStr + ', port ' + opts.port;
-    // The ports are stored as strings, unfortunately:
-    var portIdx = cur.indexOf(opts.port.toString());
+    var rule = util.format(
+        'pass %s quick proto %s from %s to any port = %d keep frags',
+        opts.direction, opts.proto, opts.target, opts.port);
+    var portIdx = cur.indexOf(rule);
     if (opts.doesNotExist) {
         if (portIdx === -1) {
             t.ok(true, curStr + ' not found');
