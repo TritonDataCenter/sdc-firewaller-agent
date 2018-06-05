@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright 2016, Joyent, Inc.
+# Copyright 2018, Joyent, Inc.
 #
 
 #
@@ -40,7 +40,7 @@ REPO_MODULES	 = src/node-dummy
 SMF_MANIFESTS_IN = smf/manifests/firewaller.xml.in
 
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_VERSION=v0.10.26
+	NODE_PREBUILT_VERSION=v0.10.48
 	NODE_PREBUILT_TAG=gz
 	NODE_PREBUILT_IMAGE=fd2cc906-8938-11e3-beab-4359c665ac99
 endif
