@@ -13,15 +13,6 @@
 #
 
 
-
-#
-# Tools
-#
-
-NODEUNIT		:= ./node_modules/.bin/nodeunit
-
-
-
 #
 # Files
 #
@@ -33,7 +24,6 @@ JSL_CONF_NODE	 = tools/jsl.node.conf
 JSL_FILES_NODE	 = $(JS_FILES)
 JSSTYLE_FILES	 = $(JS_FILES)
 JSSTYLE_FLAGS	 = -f tools/jsstyle.conf
-ESLINT		 = ./node_modules/.bin/eslint
 ESLINT_CONF	 = tools/eslint.node.conf
 ESLINT_FILES	 = $(JS_FILES)
 REPO_MODULES	 = src/node-dummy
@@ -60,6 +50,11 @@ RELEASE_MANIFEST := $(NAME)-$(STAMP).manifest
 RELSTAGEDIR          := /tmp/$(STAMP)
 DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 
+ESLINT = ./node_modules/.bin/eslint
+NODEUNIT_EXEC := ./node_modules/.bin/nodeunit
+NODEUNIT := $(NODE) $(NODEUNIT_EXEC)
+
+
 
 #
 # Repo-specific targets
@@ -68,7 +63,7 @@ DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 .PHONY: all
 all: $(SMF_MANIFESTS) | node_modules $(REPO_DEPS)
 
-$(NODEUNIT): | node_modules
+$(NODEUNIT_EXEC): | node_modules
 	$(NPM) install
 
 $(ESLINT): | $(NPM_EXEC)
@@ -83,10 +78,10 @@ node_modules: | $(NPM_EXEC)
 	cp -r deps/fw node_modules/
 	cp -r deps/fw-overlay/* node_modules/fw
 
-CLEAN_FILES += $(NODEUNIT) ./node_modules/nodeunit
+CLEAN_FILES += node_modules
 
 .PHONY: test
-test: $(NODEUNIT)
+test: $(NODEUNIT_EXEC)
 	@(for F in test/unit/*.test.js; do \
 		echo "# $$F" ;\
 		$(NODEUNIT) --reporter tap $$F ;\
