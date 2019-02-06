@@ -19,6 +19,7 @@ var bunyan = require('bunyan');
 var config = require('./lib/config');
 var firewaller = require('./lib/agent');
 var fs = require('fs');
+var netconfig = require('triton-netconfig');
 var path = require('path');
 var VError = require('verror').VError;
 
@@ -72,7 +73,7 @@ config.sdc(function (err, sdcConfig) {
         CONFIG.imageVersion = image;
         CONFIG.fwapi.host = sdcConfig.fwapi_domain;
         CONFIG.vmapi = { host: sdcConfig.vmapi_domain };
-        CONFIG.listenIP = config.findSysinfoAdminIP(sysinfo);
+        CONFIG.listenIP = netconfig.adminIpFromSysinfo(sysinfo);
 
         if (!CONFIG.listenIP) {
             LOG.error({ sysinfo: sysinfo }, 'Error finding sysinfo admin IP');
