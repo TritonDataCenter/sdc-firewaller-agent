@@ -5,29 +5,32 @@
 #
 
 #
-# Copyright 2018, Joyent, Inc.
+# Copyright (c) 2019, Joyent, Inc.
 #
 
 #
 # Firewaller agent Makefile
 #
 
-
 #
 # Files
 #
 
+
 BASH_FILES  := npm/postinstall.sh npm/postuninstall.sh
-JS_FILES	:= $(shell find lib test -name '*.js') main.js
-JSON_FILES	 = package.json config.json
-JSL_CONF_NODE	 = tools/jsl.node.conf
-JSL_FILES_NODE	 = $(JS_FILES)
-JSSTYLE_FILES	 = $(JS_FILES)
-JSSTYLE_FLAGS	 = -f tools/jsstyle.conf
-ESLINT_CONF	 = tools/eslint.node.conf
+JS_FILES        := $(shell find lib test -name '*.js') main.js
+JSON_FILES       = package.json config.json
+JSL_CONF_NODE    = tools/jsl.node.conf
+JSL_FILES_NODE   = $(JS_FILES)
+JSSTYLE_FILES    = $(JS_FILES)
+JSSTYLE_FLAGS    = -f tools/jsstyle.conf
 ESLINT_FILES	 = $(JS_FILES)
 REPO_MODULES	 = src/node-dummy
 SMF_MANIFESTS_IN = smf/manifests/firewaller.xml.in
+
+ENGBLD_REQUIRE := $(shell git submodule update --init deps/eng)
+include ./deps/eng/tools/mk/Makefile.defs
+TOP ?= $(error Unable to access eng.git submodule Makefiles.)
 
 ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_VERSION=v0.10.48
@@ -35,22 +38,20 @@ ifeq ($(shell uname -s),SunOS)
 	NODE_PREBUILT_IMAGE=fd2cc906-8938-11e3-beab-4359c665ac99
 endif
 
-include ./tools/mk/Makefile.defs
 ifeq ($(shell uname -s),SunOS)
-	include ./tools/mk/Makefile.node_prebuilt.defs
+	include ./deps/eng/tools/mk/Makefile.node_prebuilt.defs
 else
 	NPM_EXEC :=
 	NPM = npm
 endif
-include ./tools/mk/Makefile.smf.defs
+include ./deps/eng/tools/mk/Makefile.smf.defs
 
 NAME		:= firewaller
 RELEASE_TARBALL := $(NAME)-$(STAMP).tgz
 RELEASE_MANIFEST := $(NAME)-$(STAMP).manifest
-RELSTAGEDIR          := /tmp/$(STAMP)
+RELSTAGEDIR          := /tmp/$(NAME)-$(STAMP)
 DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 
-ESLINT = ./node_modules/.bin/eslint
 NODEUNIT_EXEC := ./node_modules/.bin/nodeunit
 NODEUNIT := $(NODE) $(NODEUNIT_EXEC)
 
@@ -60,25 +61,15 @@ NODEUNIT := $(NODE) $(NODEUNIT_EXEC)
 # Repo-specific targets
 #
 
-.PHONY: all
-all: $(SMF_MANIFESTS) | node_modules $(REPO_DEPS)
-
-$(NODEUNIT_EXEC): | node_modules
-	$(NPM) install
-
-$(ESLINT): | $(NPM_EXEC)
-	$(NPM) install \
-	    eslint@`json -f package.json devDependencies.eslint` \
-	    eslint-plugin-joyent@`json -f package.json devDependencies.eslint-plugin-joyent`
-
 # Remove binary modules - we use the ones in the platform that are built
 # against the platform node
-node_modules: | $(NPM_EXEC)
-	MAKE_OVERRIDES="CTFCONVERT=/bin/true CTFMERGE=/bin/true" $(NPM) install --production
-	cp -r deps/fw node_modules/
+.PHONY: all
+all: $(SMF_MANIFESTS) | $(NODE_EXEC) $(NPM_EXEC) $(REPO_DEPS)
+	SDC_AGENT_SKIP_LIFECYCLE=yes MAKE_OVERRIDES="CTFCONVERT=/bin/true CTFMERGE=/bin/true" $(NPM) install --production
 	cp -r deps/fw-overlay/* node_modules/fw
 
 CLEAN_FILES += node_modules
+DISTCLEAN_FILES += $(NAME)-*.manifest $(NAME)-*.tgz
 
 .PHONY: test
 test: $(NODEUNIT_EXEC)
@@ -107,7 +98,7 @@ release: all docs $(SMF_MANIFESTS)
 	cp -PR $(NODE_INSTALL) $(DSTDIR)/node
 	# Cleanup dev / unused bits
 	rm -rf $(DSTDIR)/node_modules/nodeunit
-	(cd $(RELSTAGEDIR) && $(TAR) -zcf $(TOP)/$(RELEASE_TARBALL) *)
+	(cd $(RELSTAGEDIR) && $(TAR) -I pigz -cf $(TOP)/$(RELEASE_TARBALL) *)
 	cat $(TOP)/manifest.tmpl | sed \
 		-e "s/UUID/$$(cat $(DSTDIR)/image_uuid)/" \
 		-e "s/NAME/$$(json name < $(TOP)/package.json)/" \
@@ -122,23 +113,15 @@ release: all docs $(SMF_MANIFESTS)
 
 .PHONY: publish
 publish: release
-	@if [[ -z "$(BITS_DIR)" ]]; then \
-		@echo "error: 'BITS_DIR' must be set for 'publish' target"; \
-		exit 1; \
-	fi
-	mkdir -p $(BITS_DIR)/$(NAME)
-	cp $(TOP)/$(RELEASE_TARBALL) $(BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
-	cp $(TOP)/$(RELEASE_MANIFEST) $(BITS_DIR)/$(NAME)/$(RELEASE_MANIFEST)
+	mkdir -p $(ENGBLD_BITS_DIR)/$(NAME)
+	cp $(TOP)/$(RELEASE_TARBALL) $(ENGBLD_BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
+	cp $(TOP)/$(RELEASE_MANIFEST) $(ENGBLD_BITS_DIR)/$(NAME)/$(RELEASE_MANIFEST)
 
-.PHONY: check
-check:: $(ESLINT)
-	$(ESLINT) -c $(ESLINT_CONF) $(ESLINT_FILES)
-
-include ./tools/mk/Makefile.deps
+include ./deps/eng/tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
-	include ./tools/mk/Makefile.node_prebuilt.targ
+	include ./deps/eng/tools/mk/Makefile.node_prebuilt.targ
 else
-	include ./tools/mk/Makefile.node.targ
+	include ./deps/eng/tools/mk/Makefile.node.targ
 endif
-include ./tools/mk/Makefile.smf.targ
-include ./tools/mk/Makefile.targ
+include ./deps/eng/tools/mk/Makefile.smf.targ
+include ./deps/eng/tools/mk/Makefile.targ
