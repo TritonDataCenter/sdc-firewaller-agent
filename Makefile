@@ -41,8 +41,11 @@ endif
 ifeq ($(shell uname -s),SunOS)
 	include ./deps/eng/tools/mk/Makefile.node_prebuilt.defs
 else
-	NPM_EXEC :=
-	NPM = npm
+	# Good enough for non-SmartOS dev.
+	NPM=npm
+	NODE=node
+	NPM_EXEC=$(shell which npm)
+	NODE_EXEC=$(shell which node)
 endif
 include ./deps/eng/tools/mk/Makefile.smf.defs
 
