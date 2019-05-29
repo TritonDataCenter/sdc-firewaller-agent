@@ -319,6 +319,7 @@ function equalSorted(t, actual, expected, desc) {
 function generateRule(override) {
     var rule = extend({
         enabled: true,
+        log: false,
         uuid: mod_uuid.v4(),
         version: '1'
     }, override);

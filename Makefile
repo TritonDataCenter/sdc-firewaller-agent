@@ -82,6 +82,9 @@ test: $(NODEUNIT_EXEC)
 		[[ $$? == "0" ]] || exit 1; \
 	done)
 
+$(NODEUNIT_EXEC): $(NPM_EXEC)
+	$(NPM) install
+
 .PHONY: release
 release: all docs $(SMF_MANIFESTS)
 	@echo "Building $(RELEASE_TARBALL)"

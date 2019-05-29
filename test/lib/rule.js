@@ -19,6 +19,14 @@ var h = require('../unit/helpers');
 var mocks = require('../unit/mocks');
 
 
+// --- Globals
+
+var AUTO_FILL = [
+    'created_by',
+    'log',
+    'version'
+];
+
 
 // --- Exports
 
@@ -64,7 +72,7 @@ function apiUpdateRule(t, opts, callback) {
         }
 
         if (opts.fillInMissing) {
-            [ 'created_by', 'version' ].forEach(function (f) {
+            AUTO_FILL.forEach(function (f) {
                 if (!opts.rule.hasOwnProperty(f)) {
                     opts.rule[f] = obj[f];
                 }
