@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<!--
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!--
+    Copyright 2019 Joyent, Inc.
+-->
+<!--
+  Firewaller agent config migration SMF manifest.
+  When per-zone ipf.conf and ipf6.conf files change in a way that it's not backward compatible,
+  we need a service which will ensure that each zone's ipf configuration files are a version that
+  is compatible with the running system.
+ -->
+<service_bundle type="manifest" name="firewaller">
+  <service name="smartdc/agent/firewaller-config-migration" type="service" version="@@VERSION@@">
+    <dependency name="network_and_local_filesystem" grouping="require_all" restart_on="error" type="service">
+      <service_fmri value="svc:/network/physical"/>
+      <service_fmri value="svc:/system/filesystem/local"/>
+    </dependency>
+    <!--
+        Make vmadmd and zones services depend on this service so that firewall
+        rules are correct before those services cause them to be read.
+    -->
+    <dependent name="smartdc_vmadmd_and_system_zones" grouping="optional_all" restart_on="none">
+      <service_fmri value="svc:/system/smartdc/vmadmd:default"/>
+      <service_fmri value="svc:/system/zones:default"/>
+    </dependent>
+    <exec_method type="method" name="start" exec="/usr/bin/ctrun -l child -o noorphan @@ROOT@@/node/bin/node --abort_on_uncaught_exception @@ROOT@@/config-migration.js &amp;" timeout_seconds="60">
+      <method_context>
+        <method_credential user="root" group="staff"/>
+        <method_environment>
+          <envvar name="PATH" value="@@PREFIX@@/bin:/usr/bin:/usr/sbin"/>
+        </method_environment>
+      </method_context>
+    </exec_method>
+    <exec_method type="method" name="restart" exec=":kill" timeout_seconds="60">
+      <method_context>
+        <method_credential user="root" group="staff"/>
+      </method_context>
+    </exec_method>
+    <exec_method type="method" name="stop" exec=":kill" timeout_seconds="60">
+      <method_context>
+        <method_credential user="root" group="staff"/>
+      </method_context>
+    </exec_method>
+    <instance name="default" enabled="true"/>
+    <stability value="Unstable"/>
+    <template>
+      <common_name>
+        <loctext xml:lang="C">Firewaller Agent Config Migration</loctext>
+      </common_name>
+    </template>
+  </service>
+</service_bundle>

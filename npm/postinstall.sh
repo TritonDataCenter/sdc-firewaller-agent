@@ -6,7 +6,7 @@
 #
 
 #
-# Copyright (c) 2019, Joyent, Inc.
+# Copyright 2019 Joyent, Inc.
 #
 
 if [[ "${SDC_AGENT_SKIP_LIFECYCLE:-no}" = "yes" ]]; then
@@ -64,6 +64,12 @@ function import_smf_manifest()
         "$SMF_DIR/${AGENT}-setup.xml"
     if [[ $(uname -s) == "SunOS" ]]; then
         svccfg import $SMF_DIR/${AGENT}-setup.xml
+    fi
+
+    subfile "$ROOT/smf/manifests/${AGENT}-config-migration.xml.in" \
+        "$SMF_DIR/${AGENT}-config-migration.xml"
+    if [[ $(uname -s) == "SunOS" ]]; then
+        svccfg import $SMF_DIR/${AGENT}-config-migration.xml
     fi
 }
 

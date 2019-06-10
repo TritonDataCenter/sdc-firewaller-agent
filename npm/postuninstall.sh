@@ -6,7 +6,7 @@
 #
 
 #
-# Copyright (c) 2019, Joyent, Inc.
+# Copyright 2019 Joyent, Inc.
 #
 
 if [[ "${SDC_AGENT_SKIP_LIFECYCLE:-no}" = "yes" ]]; then
@@ -20,6 +20,12 @@ NAME=firewaller
 if [[ $(uname -s) == "SunOS" ]]; then
     svcadm disable -s $NAME
     svccfg delete $NAME
+    svcadm disable -s $NAME-agent-setup
+    svccfg delete $NAME-agent-setup
+    svcadm disable -s $NAME-config-migration
+    svccfg delete $NAME-config-migration
 fi
 
 rm -f "$SMFDIR/$NAME.xml"
+rm -f "$SMFDIR/$NAME-agent-setup.xml"
+rm -f "$SMFDIR/$NAME-config-migration.xml"
