@@ -130,6 +130,7 @@ function setupMocks() {
     var allowed = [
         './',
         './add-rule',
+        './agent',
         './bunyan_helper',
         './cache',
         './charset.js',

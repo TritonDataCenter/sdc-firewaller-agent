@@ -17,6 +17,7 @@
 var assert = require('assert-plus');
 var bunyan = require('bunyan');
 var config = require('./lib/config');
+var cueball = require('cueball');
 var firewaller = require('./lib/agent');
 var fs = require('fs');
 var netconfig = require('triton-netconfig');
@@ -74,6 +75,31 @@ config.sdc(function (err, sdcConfig) {
         CONFIG.fwapi.host = sdcConfig.fwapi_domain;
         CONFIG.vmapi = { host: sdcConfig.vmapi_domain };
         CONFIG.listenIP = netconfig.adminIpFromSysinfo(sysinfo);
+
+        // JSSTYLED
+        var binder = CONFIG.vmapi.host.replace(/^vmapi/, 'binder');
+
+        CONFIG.cueballAgent = new cueball.HttpAgent({
+            resolvers: [ binder ],
+            initialDomains: [
+                CONFIG.fwapi.host,
+                CONFIG.vmapi.host
+            ],
+            tcpKeepAliveInitialDelay: 10000,
+            ping: '/ping',
+            pingInterval: 90000,
+            spares: 3,
+            maximum: 10,
+            recovery: {
+                default: {
+                    timeout: 2000,
+                    maxTimeout: 8000,
+                    retries: 3,
+                    delay: 0,
+                    maxDelay: 1000
+                }
+            }
+        });
 
         if (!CONFIG.listenIP) {
             LOG.error({ sysinfo: sysinfo }, 'Error finding sysinfo admin IP');

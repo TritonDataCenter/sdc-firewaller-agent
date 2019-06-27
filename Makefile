@@ -58,7 +58,16 @@ DSTDIR          := $(RELSTAGEDIR)/$(NAME)
 NODEUNIT_EXEC := ./node_modules/.bin/nodeunit
 NODEUNIT := $(NODE) $(NODEUNIT_EXEC)
 
-
+#
+# Due to the unfortunate nature of npm, the Node Package Manager, there appears
+# to be no way to assemble our dependencies without running the lifecycle
+# scripts.  These lifecycle scripts should not be run except in the context of
+# an agent installation or uninstallation, so we provide a magic environment
+# varible to disable them here.
+#
+NPM_ENV =		SDC_AGENT_SKIP_LIFECYCLE=yes
+NPM_ENV +=		MAKE_OVERRIDES="CTFCONVERT=/bin/true CTFMERGE=/bin/true"
+RUN_NPM_INSTALL =	$(NPM_ENV) $(NPM) install
 
 #
 # Repo-specific targets
@@ -68,7 +77,7 @@ NODEUNIT := $(NODE) $(NODEUNIT_EXEC)
 # against the platform node
 .PHONY: all
 all: $(SMF_MANIFESTS) | $(NODE_EXEC) $(NPM_EXEC) $(REPO_DEPS)
-	SDC_AGENT_SKIP_LIFECYCLE=yes MAKE_OVERRIDES="CTFCONVERT=/bin/true CTFMERGE=/bin/true" $(NPM) install --production
+	$(RUN_NPM_INSTALL) --production
 	cp -r deps/fw-overlay/* node_modules/fw
 
 CLEAN_FILES += node_modules
@@ -83,7 +92,7 @@ test: $(NODEUNIT_EXEC)
 	done)
 
 $(NODEUNIT_EXEC): $(NPM_EXEC)
-	$(NPM) install
+	$(RUN_NPM_INSTALL)
 
 .PHONY: release
 release: all docs $(SMF_MANIFESTS)
