@@ -32,7 +32,7 @@ var agent;
 
 
 exports.setup = function (t) {
-    h.createAgent(t, true, function (err, a) {
+    h.createAgent(t, function (err, a) {
         agent = a;
         t.ok(agent, 'agent created');
         t.ifError(err, 'createAgent() error');

@@ -33,9 +33,9 @@ include ./deps/eng/tools/mk/Makefile.defs
 TOP ?= $(error Unable to access eng.git submodule Makefiles.)
 
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_VERSION=v0.10.48
+	NODE_PREBUILT_VERSION=v6.17.0
 	NODE_PREBUILT_TAG=gz
-	NODE_PREBUILT_IMAGE=fd2cc906-8938-11e3-beab-4359c665ac99
+	NODE_PREBUILT_IMAGE=18b094b0-eb01-11e5-80c1-175dac7ddf02
 endif
 
 ifeq ($(shell uname -s),SunOS)

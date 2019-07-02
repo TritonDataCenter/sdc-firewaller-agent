@@ -20,7 +20,7 @@ var clone = require('clone');
 var createRemoteVM =
     require('../../node_modules/fw/lib/util/vm').createRemoteVM;
 var fwMocks = require('../../node_modules/fw/test/lib/mocks');
-var ldapjs = require('ldapjs');
+var mod_filter = require('ldap-filter');
 var mod_log = require('../lib/log');
 var pred = require('../../deps/vmapi/lib/common/predicate');
 var util = require('util');
@@ -187,7 +187,7 @@ MockVMAPI.prototype.get = function vmsGet(params, callback) {
 
     var parsedPred = JSON.parse(params.query.predicate);
     var ldapQuery = pred.toLdapQuery(parsedPred);
-    var filter = ldapjs.parseFilter(ldapQuery);
+    var filter = mod_filter.parse(ldapQuery);
 
     LOG.debug({ pred: parsedPred, query: ldapQuery }, 'listVMs: query');
 

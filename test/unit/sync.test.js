@@ -14,13 +14,14 @@
 
 'use strict';
 
-var extend = require('xtend');
 var h = require('./helpers');
+var mod_jsprim = require('jsprim');
 var mod_rule = require('../lib/rule');
 var mod_rvm = require('../lib/rvm');
 var mod_uuid = require('uuid');
 var mod_vm = require('../lib/vm');
 
+var extend = mod_jsprim.mergeObjects;
 
 
 // --- Globals
@@ -57,9 +58,11 @@ function sync(t) {
 
 
 exports.setup = function (t) {
-    h.createAgent(t, function (a) {
+    h.createAgent(t, function (err, a) {
         agent = a;
-        return t.done();
+        t.ifError(err, 'createAgent() error');
+        t.ok(agent, 'agent created');
+        t.done();
     });
 };
 

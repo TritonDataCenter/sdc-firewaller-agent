@@ -22,34 +22,35 @@ var createRemoteVM =
 var firewaller;
 var fwMocks = require('../../node_modules/fw/test/lib/mocks');
 var fwHelpers = require('../../node_modules/fw/test/lib/helpers');
-var extend = require('xtend');
 var fs = require('fs');
 var jsprim = require('jsprim');
+var messages = require('fast-messages');
 var mocks = require('./mocks');
+var mod_jsprim = require('jsprim');
 var mod_uuid = require('uuid');
 var once = require('once');
 var path = require('path');
 var pred = require('../../lib/pred');
 var restify = require('restify');
-var stream = require('fast-stream');
 var util = require('util');
 var uuidSort = mocks._uuidSort;
 
+var extend = mod_jsprim.mergeObjects;
 
 
 // --- Globals
 
 
 
-var AGENT;
+var AGENT = null;
 var CLIENT = restify.createJsonClient({
     agent: false,
-    url: 'http://localhost:2021'
+    url: 'http://127.0.0.1:2021'
 });
 var ID = 1;
 var INITIAL_DATA;
 var LOCAL_SERVER = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
-var STREAM;
+var STREAM = null;
 var OWNER_UUID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 var OTHER_SERVER = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 
@@ -129,43 +130,77 @@ function setupMocks() {
 
     var allowed = [
         './',
+        './_stream_duplex',
+        './_stream_readable',
+        './_stream_transform',
+        './_stream_writable',
         './add-rule',
         './agent',
+        './backoff',
         './bunyan_helper',
         './cache',
-        './charset.js',
         './constants',
-        './dictionary',
+        './debug',
         './del-rule',
+        './dictionary',
         './dtrace',
-        './formatters',
-        './encoding.js',
         './endpoints',
         './errors',
+        './formatters',
         './framer',
         './fw',
+        './hpack-pool',
+        './hpack/compressor',
+        './hpack/decoder',
+        './hpack/decompressor',
+        './hpack/encoder',
+        './hpack/huffman',
+        './hpack/static-table',
+        './hpack/table',
+        './hpack/utils',
         './http_date',
-        './language.js',
-        './mediaType.js',
+        './internal/streams/BufferList',
+        './internal/streams/destroy',
+        './internal/streams/stream',
+        './lib/_stream_duplex.js',
+        './lib/_stream_passthrough.js',
+        './lib/_stream_readable.js',
+        './lib/_stream_transform.js',
+        './lib/_stream_writable.js',
+        './lib/backoff',
+        './lib/function_call.js',
+        './lib/mediaType',
+        './lib/strategy/exponential',
+        './lib/strategy/fibonacci',
+        './node.js',
         './ping',
         './plugins/cors',
         './pred',
-        './response',
+        './queue',
         './request',
-        './rules',
+        './response',
         './router',
+        './rules',
         './rvms',
+        './scheduler',
         './server',
-        './spdy/client',
-        './spdy/connection',
-        './spdy/protocol',
+        './spdy-transport/connection',
+        './spdy-transport/priority',
+        './spdy-transport/protocol/base',
+        './spdy-transport/protocol/http2',
+        './spdy-transport/protocol/spdy',
+        './spdy-transport/stream',
+        './spdy-transport/utils',
+        './spdy-transport/window',
+        './spdy/agent',
+        './spdy/handle',
+        './spdy/request',
         './spdy/response',
-        './spdy/scheduler',
         './spdy/server',
-        './spdy/stream',
-        './spdy/utils',
-        './spdy/zlib-pool',
+        './spdy/socket',
         './status',
+        './strategy',
+        './strategy/fibonacci',
         './sync',
         './tasks',
         './update-rule',
@@ -178,36 +213,61 @@ function setupMocks() {
         './vm-common',
         './vm-delete',
         './vm-update',
+        './zlib-pool',
         '../fw',
         '../fwapi',
-        '../spdy',
         '../vm',
         '../vmapi',
+        '../hpack',
+        '../spdy',
+        '../spdy-transport',
         '../../lib/agent',
-        '../../spdy',
+        '../../../spdy-transport',
         'backoff',
+        'buffer-shims',
         'buffer',
+        'core-util-is',
         'crypto',
+        'debug',
         'deep-equal',
+        'detect-node',
         'domain',
-        'fast-stream',
+        'fast-messages',
         'fw',
         'fw/lib/util/log',
+        'handle-thing',
+        'hpack.js',
+        'http-deceiver',
         'http',
         'https',
-        'jsprim',
+        'inherits',
+        'isarray',
         'json-schema',
+        'jsprim',
         'lru-cache',
         'mime',
+        'minimalistic-assert',
+        'ms',
         'negotiator',
+        'obuf',
         'once',
         'os',
         'path',
+        'process-nextick-args',
+        'readable-stream',
         'restify',
+        'safe-buffer',
+        'select-hose',
         'semver',
+        'spdy-transport',
         'spdy',
+        'tls',
+        'tty',
         'url',
         'uuid',
+        'util-deprecate',
+        'vasync',
+        'wbuf',
         'zlib'
     ];
 
@@ -248,11 +308,12 @@ function convertVMtoRVM(inVMs) {
  * Create both the firewall agent and a fake FWAPI for it to connect to. If
  * connect is true, connect the agent to the fake FWAPI.
  */
-function createAgent(t, connect, callback) {
-    if (!callback) {
-        callback = connect;
-        connect = false;
-    }
+function createAgent(t, callback) {
+    assert.object(t, 't');
+    assert.func(callback, 'callback');
+
+    assert.equal(AGENT, null, 'No existing AGENT');
+    assert.equal(STREAM, null, 'No existing STREAM');
 
     var conf = JSON.parse(fs.readFileSync(path.normalize(
         __dirname + '/../../config.json'), 'utf-8'));
@@ -267,7 +328,12 @@ function createAgent(t, connect, callback) {
 
     conf.log = bunyan.createLogger({
         name: 'firewaller',
-        level: process.env.LOG_LEVEL || 'fatal'
+        streams: [
+            {
+                level: process.env.LOG_LEVEL || 'fatal',
+                stream: process.stderr
+            }
+        ]
     });
 
     if (!firewaller) {
@@ -275,7 +341,7 @@ function createAgent(t, connect, callback) {
         firewaller = require('../../lib/agent');
     }
 
-    STREAM = stream.createServer({
+    STREAM = messages.createServer({
         log: conf.log,
         server_id: 'ffffffff-ffff-ffff-ffff-ffffffffffff'
     });
@@ -285,20 +351,17 @@ function createAgent(t, connect, callback) {
 
         AGENT = firewaller.create(conf);
         t.ok(AGENT, 'created agent');
-        if (!connect) {
-            callback(AGENT);
-            return;
-        }
 
         AGENT.connect(function (err2) {
             if (err2) {
                 t.ifError(err2);
-                return callback(err2, null);
+                callback(err2, null);
+                return;
             }
 
             t.ok(!err2, 'agent connected');
 
-            return callback(null, AGENT);
+            callback(null, AGENT);
         });
     });
 }
@@ -483,17 +546,20 @@ function sendMessage(name, value, callback) {
 function teardown(t) {
     if (AGENT) {
         AGENT.close();
+        AGENT = null;
     }
 
     if (STREAM) {
         STREAM.close();
+        STREAM = null;
     }
 
     if (CLIENT) {
         CLIENT.close();
+        CLIENT = null;
     }
 
-    return t.done();
+    t.done();
 }
 
 

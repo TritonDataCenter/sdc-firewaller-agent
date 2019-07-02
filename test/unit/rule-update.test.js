@@ -40,7 +40,7 @@ var d = {
 
 
 exports.setup = function (t) {
-    h.createAgent(t, true, function (err, a) {
+    h.createAgent(t, function (err, a) {
         agent = a;
         t.ifError(err, 'createAgent() error');
         t.ok(agent, 'agent created');
