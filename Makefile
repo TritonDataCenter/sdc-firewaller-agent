@@ -18,7 +18,7 @@
 
 
 BASH_FILES  := npm/postinstall.sh npm/postuninstall.sh
-JS_FILES        := $(shell find lib test -name '*.js') main.js
+JS_FILES        := $(shell find lib test -name '*.js') $(wildcard ./*.js)
 JSON_FILES       = package.json config.json
 JSL_CONF_NODE    = tools/jsl.node.conf
 JSL_FILES_NODE   = $(JS_FILES)
@@ -101,6 +101,7 @@ release: all docs $(SMF_MANIFESTS)
 	(git symbolic-ref HEAD | awk -F/ '{print $$3}' && git describe) > $(DSTDIR)/describe
 	cp -r \
     $(TOP)/config.json \
+    $(TOP)/config-migration.js \
     $(TOP)/main.js \
     $(TOP)/lib \
     $(TOP)/node_modules \

@@ -31,91 +31,27 @@ var LOG = bunyan.createLogger({
 
 var DEV_IPFEV = '/dev/ipfev';
 var IPF_CONF = '%s/config/ipf.conf';
+var IPF_VER_RE = /^# smartos_ipf_version (\d+)$/m;
 
 vasync.pipeline({
     funcs: [
         // Get all the local VMs with firewall_enabled=true
         function loadFwEnabledVms(ctx, next) {
-            mod_vm.list(LOG, {
-                firewall_enabled: true
-            }, function listVmsCb(err, vms) {
+            mod_vm.list(LOG, {}, function listVmsCb(err, allVMs) {
                 if (err) {
                     next(err);
                     return;
                 }
-                ctx.vms = vms;
+                ctx.allVMs = allVMs;
+                ctx.vms = allVMs.filter(function (vm) {
+                    return vm.firewall_enabled;
+                });
                 ctx.vmsByVmUUID = {};
                 ctx.vms.forEach(function (vm) {
                     ctx.vmsByVmUUID[vm.uuid] = vm;
                 });
                 next();
             });
-        },
-        // Load all the firewall rules for those vms
-        function loadFwEnabledRules(ctx, next) {
-            if (!ctx.vms.length) {
-                next();
-                return;
-            }
-            fw.list({
-                log: LOG,
-                payload: {
-                    localVMs: ctx.vms,
-                    vms: ctx.vms
-                }
-            }, function listRulesCb(err, rules) {
-                if (err) {
-                    next(err);
-                    return;
-                }
-                ctx.rules = rules;
-                next();
-            });
-        },
-        // We're interested only in firewall rules which have `rule.log` set
-        function filterRulesWithSetTags(ctx, next) {
-            if (!ctx.rules.length) {
-                next();
-                return;
-            }
-            ctx.rules = ctx.rules.filter(function ruleHasTags(rule) {
-                return rule.log;
-            });
-            next();
-        },
-        // Since firewall rules don't keep a reference to the VM they belong
-        // to, we need to figure out which VM UUIDs we're gonna need to check
-        // based into the firewall rules
-        function getVmsForRulesWithSetTags(ctx, next) {
-            if (ctx.rules.length === 0) {
-                next();
-                return;
-            }
-            ctx.rulesByVmUUID = {};
-            vasync.forEachParallel({
-                inputs: ctx.rules,
-                func: function getRuleVm(rule, nextRule) {
-                    fw.vms({
-                        log: LOG,
-                        payload: {
-                            rule: rule,
-                            vms: ctx.vms
-                        }
-                    }, function getRuleVmCb(getErr, vmUuids) {
-                        if (getErr) {
-                            nextRule(getErr);
-                            return;
-                        }
-                        vmUuids.forEach(function addToCtx(vmUuid) {
-                            if (!ctx.rulesByVmUUID[vmUuid]) {
-                                ctx.rulesByVmUUID[vmUuid] = [];
-                            }
-                            ctx.rulesByVmUUID[vmUuid].push(rule);
-                        });
-                        nextRule();
-                    });
-                }
-            }, next);
         },
         function getPlatformIPFVersion(ctx, next) {
             var vFile = '/etc/ipf/smartos_version';
@@ -129,37 +65,32 @@ vasync.pipeline({
         // Once we know which vms to check, we need to review the contents of
         // the IPF files
         function checkIPFVersions(ctx, next) {
-            if (!ctx.rulesByVmUUID) {
+            if (ctx.vms.length === 0) {
                 next();
                 return;
             }
+
             ctx.vmsToRewriteIPF = [];
-            var vmsToCheck = Object.keys(ctx.rulesByVmUUID);
-            LOG.debug({vmsToCheck: vmsToCheck}, 'VMs to check');
-            if (!vmsToCheck.length) {
-                next();
-                return;
-            }
+
             vasync.forEachParallel({
-                inputs: vmsToCheck,
-                func: function testIPFFiles(aVm, nextVm) {
+                inputs: ctx.vms,
+                func: function testIPFFiles(vm, nextVm) {
                     var ipfv4 = util.format(IPF_CONF,
-                        ctx.vmsByVmUUID[aVm].zonepath);
+                        ctx.vmsByVmUUID[vm.uuid].zonepath);
                     var ipfv4Data = fs.readFileSync(ipfv4, 'utf8');
-                    var re = /^# smartos_ipf_version (\d+)$/m;
-                    var ipfv4Res = re.exec(ipfv4Data);
+                    var ipfv4Res = IPF_VER_RE.exec(ipfv4Data);
                     // If we cannot find a version written on the rules file,
                     // let's assume it's version 1 (pre RFD 163):
                     var rulesVersion = (ipfv4Res !== null) ?
                             Number(ipfv4Res[1]) : 1;
                     if (rulesVersion !== ctx.ipfSmartosVersion) {
-                        ctx.vmsToRewriteIPF.push(ctx.vmsByVmUUID[aVm]);
+                        ctx.vmsToRewriteIPF.push(ctx.vmsByVmUUID[vm.uuid]);
                     }
 
                     LOG.debug({
                         smartos_ipf_version: ctx.ipfSmartosVersion,
                         rules_ipf_version: rulesVersion,
-                        vm_uuid: aVm
+                        vm_uuid: vm.uuid
                     }, 'SmartOS IPF version check');
                     nextVm();
                 }
@@ -168,13 +99,16 @@ vasync.pipeline({
         function updateIpfFiles(ctx, next) {
             if (!Array.isArray(ctx.vmsToRewriteIPF) ||
                 ctx.vmsToRewriteIPF.length === 0) {
+                LOG.info('found 0 VMs that need their ipfilter ' +
+                    'configuration rewritten');
                 next();
                 return;
             }
             fw.update({
                 log: LOG,
                 payload: {
-                    localVms: ctx.vmsToRewriteIPF
+                    localVMs: ctx.vmsToRewriteIPF,
+                    vms: ctx.allVMs
                 }
             }, next);
         }
@@ -185,6 +119,9 @@ vasync.pipeline({
 }, function pipeCb(pipeErr) {
     if (pipeErr) {
         console.error(pipeErr);
+        process.exit(1);
+    } else {
+        process.exit(0);
     }
 });
 

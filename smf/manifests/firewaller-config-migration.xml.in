@@ -20,15 +20,24 @@
       <service_fmri value="svc:/network/physical"/>
       <service_fmri value="svc:/system/filesystem/local"/>
     </dependency>
+    <dependency name="vminfod_when_present" grouping="optional_all" restart_on="error" type="service">
+      <service_fmri value="svc:/system/smartdc/vminfod"/>
+    </dependency>
     <!--
-        Make vmadmd and zones services depend on this service so that firewall
-        rules are correct before those services cause them to be read.
+        We make the zones service depend on this service so that the firewall
+        rules are correct before the zones (and other services like vmadmd)
+        cause them to be read.
     -->
-    <dependent name="smartdc_vmadmd_and_system_zones" grouping="optional_all" restart_on="none">
-      <service_fmri value="svc:/system/smartdc/vmadmd:default"/>
+    <dependent name="system_zones" grouping="optional_all" restart_on="none">
       <service_fmri value="svc:/system/zones:default"/>
     </dependent>
-    <exec_method type="method" name="start" exec="/usr/bin/ctrun -l child -o noorphan @@ROOT@@/node/bin/node --abort_on_uncaught_exception @@ROOT@@/config-migration.js &amp;" timeout_seconds="60">
+    <!--
+        When the config-migration.js script runs, it will look up all of the
+        VMs that have their firewall enabled, and will take care of regenerating
+        their ipfilter configuration if neeed. We run it using ctrun since it
+        spawns child processes, to ensure they get cleaned up.
+    -->
+    <exec_method type="method" name="start" exec="/usr/bin/ctrun -l child -o noorphan @@ROOT@@/node/bin/node --abort_on_uncaught_exception @@ROOT@@/config-migration.js" timeout_seconds="0">
       <method_context>
         <method_credential user="root" group="staff"/>
         <method_environment>
@@ -36,16 +45,14 @@
         </method_environment>
       </method_context>
     </exec_method>
-    <exec_method type="method" name="restart" exec=":kill" timeout_seconds="60">
+    <exec_method type="method" name="stop" exec=":true" timeout_seconds="60">
       <method_context>
         <method_credential user="root" group="staff"/>
       </method_context>
     </exec_method>
-    <exec_method type="method" name="stop" exec=":kill" timeout_seconds="60">
-      <method_context>
-        <method_credential user="root" group="staff"/>
-      </method_context>
-    </exec_method>
+    <property_group name='startd' type='framework'>
+      <propval name='duration' type='astring' value='transient' />
+    </property_group>
     <instance name="default" enabled="true"/>
     <stability value="Unstable"/>
     <template>
