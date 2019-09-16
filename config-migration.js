@@ -77,7 +77,17 @@ vasync.pipeline({
                 func: function testIPFFiles(vm, nextVm) {
                     var ipfv4 = util.format(IPF_CONF,
                         ctx.vmsByVmUUID[vm.uuid].zonepath);
-                    var ipfv4Data = fs.readFileSync(ipfv4, 'utf8');
+                    var ipfv4Data;
+                    try {
+                        ipfv4Data = fs.readFileSync(ipfv4, 'utf8');
+                    } catch (err) {
+                        if (err.code !== 'ENOENT') {
+                            nextVm(err);
+                            return;
+                        }
+                        nextVm();
+                        return;
+                    }
                     var ipfv4Res = IPF_VER_RE.exec(ipfv4Data);
                     // If we cannot find a version written on the rules file,
                     // let's assume it's version 1 (pre RFD 163):
