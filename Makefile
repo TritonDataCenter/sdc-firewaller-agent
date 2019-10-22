@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright (c) 2019, Joyent, Inc.
+# Copyright 2019 Joyent, Inc.
 #
 
 #
@@ -98,7 +98,6 @@ $(NODEUNIT_EXEC): $(NPM_EXEC)
 release: all docs $(SMF_MANIFESTS)
 	@echo "Building $(RELEASE_TARBALL)"
 	@mkdir -p $(DSTDIR)
-	(git symbolic-ref HEAD | awk -F/ '{print $$3}' && git describe) > $(DSTDIR)/describe
 	cp -r \
     $(TOP)/config.json \
     $(TOP)/config-migration.js \
