@@ -27,7 +27,10 @@
  */
 
 var fs = require('fs');
-var fsext = require('/usr/node/node_modules/fs-ext');
+/*
+ * Modified from smartos-live to use local fs-ext
+ */
+var fsext = require('fs-ext');
 
 // --- Globals
 
