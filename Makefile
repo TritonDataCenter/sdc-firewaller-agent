@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright 2019 Joyent, Inc.
+# Copyright 2020 Joyent, Inc.
 #
 
 #
@@ -73,12 +73,9 @@ RUN_NPM_INSTALL =	$(NPM_ENV) $(NPM) install
 # Repo-specific targets
 #
 
-# Remove binary modules - we use the ones in the platform that are built
-# against the platform node
 .PHONY: all
 all: $(SMF_MANIFESTS) | $(NODE_EXEC) $(NPM_EXEC) $(REPO_DEPS)
 	$(RUN_NPM_INSTALL) --production
-	cp -r deps/fw-overlay/* node_modules/fw
 
 CLEAN_FILES += node_modules
 DISTCLEAN_FILES += $(NAME)-*.manifest $(NAME)-*.tgz

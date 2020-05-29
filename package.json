@@ -1,7 +1,7 @@
 {
     "name": "firewaller",
     "description": "Triton Data Center firewalling agent",
-    "version": "1.6.0",
+    "version": "1.6.1",
     "author": "Joyent (joyent.com)",
     "private": true,
     "dependencies": {
@@ -11,9 +11,9 @@
         "clone": "1.0.2",
         "cueball": "2.10.0",
         "fast-messages": "2.0.0",
+        "fs-ext": "^2.0.0",
         "fw": "./deps/fw",
         "jsprim": "2.0.0",
-        "lockfd": "2.0.2",
         "restify": "4.3.4",
         "sdc-clients": "13.0.1",
         "triton-netconfig": "1.3.0",
