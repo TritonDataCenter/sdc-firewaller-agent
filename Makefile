@@ -5,7 +5,7 @@
 #
 
 #
-# Copyright 2020 Joyent, Inc.
+# Copyright 2022 Joyent, Inc.
 #
 
 #
@@ -33,9 +33,9 @@ include ./deps/eng/tools/mk/Makefile.defs
 TOP ?= $(error Unable to access eng.git submodule Makefiles.)
 
 ifeq ($(shell uname -s),SunOS)
-	NODE_PREBUILT_VERSION=v6.17.0
+	NODE_PREBUILT_VERSION=v6.17.1
 	NODE_PREBUILT_TAG=gz
-	NODE_PREBUILT_IMAGE=18b094b0-eb01-11e5-80c1-175dac7ddf02
+	NODE_PREBUILT_IMAGE=5417ab20-3156-11ea-8b19-2b66f5e7a439
 endif
 
 ifeq ($(shell uname -s),SunOS)
