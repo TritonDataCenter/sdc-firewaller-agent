@@ -6,11 +6,12 @@
 
 /*
  * Copyright 2019 Joyent, Inc.
+ * Copyright 2022 MNX Cloud, Inc.
  */
 
 /*
  * Firewaller agent config migration from/to pre/post cfwlogging
- * See https://github.com/joyent/rfd/blob/master/rfd/0163/README.md
+ * See https://github.com/TritonDataCenter/rfd/blob/master/rfd/0163/README.md
  */
 
 'use strict';

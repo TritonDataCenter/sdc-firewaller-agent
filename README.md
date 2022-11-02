@@ -6,19 +6,20 @@
 
 <!--
     Copyright 2019 Joyent, Inc.
+    Copyright 2022 MNX Cloud, Inc.
 -->
 
 # sdc-firewaller-agent
 
 This repository is part of the Joyent Triton project. See the [contribution
-guidelines](https://github.com/joyent/triton/blob/master/CONTRIBUTING.md)
+guidelines](https://github.com/TritonDataCenter/triton/blob/master/CONTRIBUTING.md)
 and general documentation at the main
-[Triton project](https://github.com/joyent/triton) page.
+[Triton project](https://github.com/TritonDataCenter/triton) page.
 
 Firewaller is the SDC compute node agent responsible for syncing firewall
 rules and associated VM data from FWAPI and VMAPI. For more information on
 how it interacts with the rest of SmartDataCenter, consult the
-[Firewall API architecture document](https://github.com/joyent/sdc-fwapi/blob/master/docs/architecture.md).
+[Firewall API architecture document](https://github.com/TritonDataCenter/sdc-fwapi/blob/master/docs/architecture.md).
 
 
 # Repository
@@ -39,7 +40,7 @@ how it interacts with the rest of SmartDataCenter, consult the
 
 To get started:
 
-    git clone git@github.com:joyent/sdc-firewaller-agent.git
+    git clone git@github.com:TritonDataCenter/sdc-firewaller-agent.git
     cd sdc-firewaller-agent
     make
 
@@ -71,7 +72,7 @@ To run an individual test:
 ## Integration tests
 
 Since firewaller and the Firewall API are closely related, it is strongly
-encouraged that you run the [Firewall API](https://github.com/joyent/sdc-fwapi)
+encouraged that you run the [Firewall API](https://github.com/TritonDataCenter/sdc-fwapi)
 integration tests before checking in.
 
 To run the integration tests, on a **non-production** SDC server:
@@ -79,4 +80,4 @@ To run the integration tests, on a **non-production** SDC server:
     sdc-login fwapi
     /opt/smartdc/fwapi/test/runtests
 
-For more information, consult the [Firewall API README](https://github.com/joyent/sdc-fwapi/blob/master/README.md)
+For more information, consult the [Firewall API README](https://github.com/TritonDataCenter/sdc-fwapi/blob/master/README.md)

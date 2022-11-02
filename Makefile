@@ -6,6 +6,7 @@
 
 #
 # Copyright 2020 Joyent, Inc.
+# Copyright 2022 MNX Cloud, Inc.
 #
 
 #
@@ -102,10 +103,11 @@ release: all docs $(SMF_MANIFESTS)
     $(TOP)/lib \
     $(TOP)/node_modules \
     $(TOP)/npm \
-    $(TOP)/package.json \
     $(TOP)/sbin \
     $(TOP)/smf \
     $(DSTDIR)
+	json -f $(TOP)/package.json -e 'this.version += "-$(STAMP)"' \
+	    > $(RELSTAGEDIR)/$(NAME)/package.json
 	uuid -v4 > $(DSTDIR)/image_uuid
 	cp -PR $(NODE_INSTALL) $(DSTDIR)/node
 	# Cleanup dev / unused bits
