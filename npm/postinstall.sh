@@ -7,10 +7,16 @@
 
 #
 # Copyright 2019 Joyent, Inc.
+# Copyright 2023 MNX Cloud, Inc.
 #
 
 if [[ "${SDC_AGENT_SKIP_LIFECYCLE:-no}" = "yes" ]]; then
     printf 'Running during package build; skipping lifecycle script.\n' >&2
+    exit 0
+fi
+
+if [[ $(uname -s) == "Linux" ]]; then
+    echo "Skipping firewaller postinstall on Linux for now"
     exit 0
 fi
 
